@@ -516,6 +516,39 @@
   .work__editlayer button:hover { border-color: var(--fg); }
   .work__editlayer button.danger:hover { background: var(--fg); color: var(--bg); }
 
+  /* Drag-to-reposition hint — fades in only when container has media */
+  .el-drag-hint {
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0;
+    margin-top: 12px;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 400ms var(--ease-out);
+  }
+  .has-media .el-drag-hint { opacity: 0.45; }
+
+  /* Grab cursor when media present and edit mode on */
+  body.editing .work__inner.has-media .work__editlayer,
+  body.editing .hero__media.has-media .work__editlayer { cursor: grab; }
+
+  /* Dragover visual for hero section (work sections already covered) */
+  .hero.is-dragover .work__editlayer {
+    background: rgba(245, 245, 240, 0.06);
+    border-color: var(--fg);
+  }
+
+  /* Hero frame labels must sit above uploaded media (z-index 1) */
+  .hero__media .frame-label,
+  .hero__media .frame-runtime { z-index: 2; }
+  /* Fade them out once real media is uploaded */
+  .hero__media.has-media .frame-label,
+  .hero__media.has-media .frame-runtime { opacity: 0; transition: opacity 800ms var(--ease-out); }
+
   /* Edit notice banner */
   .editbanner {
     position: fixed;
@@ -687,9 +720,10 @@
   updateIndex();
 
   // ===================================================================
-  // Edit-mode upload — IndexedDB helpers
-  // Same store as works.html; landing keys prefixed "landing-" to avoid
-  // collisions with the gallery keys.
+  // Edit-mode upload — IndexedDB (media blobs) + localStorage (positions)
+  // DB: "almog-gallery / media" — same store as works.html.
+  // Landing-page keys are prefixed "landing-" to avoid gallery collisions.
+  // Focal-point (x%, y%) saved in localStorage under "almog-pos-<key>".
   // ===================================================================
   const DB_NAME = 'almog-gallery';
   const STORE   = 'media';
@@ -733,11 +767,26 @@
     });
   }
 
-  // Render or remove uploaded media inside a work__inner frame
-  function renderWorkMedia(inner, fileOrBlob) {
-    const old = inner.querySelector('.work__media');
+  // --- Focal-point helpers (two numbers, tiny — localStorage is fine) --
+  function getSavedPos(idbKey) {
+    try {
+      const s = localStorage.getItem(`almog-pos-${idbKey}`);
+      if (s) return JSON.parse(s);
+    } catch (_) {}
+    return { x: 50, y: 50 };
+  }
+  function savePos(idbKey, x, y) {
+    localStorage.setItem(`almog-pos-${idbKey}`, JSON.stringify({ x, y }));
+  }
+
+  // --- Render / remove media inside a container ----------------------
+  function renderWorkMedia(container, fileOrBlob, idbKey) {
+    const old = container.querySelector('.work__media');
     if (old) old.remove();
-    if (!fileOrBlob) return;
+    if (!fileOrBlob) {
+      container.classList.remove('has-media');
+      return;
+    }
     const url = URL.createObjectURL(fileOrBlob);
     const isVideo = (fileOrBlob.type || '').startsWith('video/');
     let el;
@@ -750,60 +799,93 @@
       el.src = url; el.alt = '';
     }
     el.className = 'work__media';
-    inner.insertBefore(el, inner.firstChild);
+    const pos = getSavedPos(idbKey);
+    el.style.objectPosition = `${pos.x}% ${pos.y}%`;
+    container.insertBefore(el, container.firstChild);
+    container.classList.add('has-media');
   }
 
-  // Work metadata for edit-layer labels
-  const LANDING_WORKS = {
-    'aether':       { title: 'Aether',       sub: '2025 · Brand Film'    },
-    'silent-bloom': { title: 'Silent Bloom', sub: '2025 · Editorial'     },
-    'vessel':       { title: 'Vessel',       sub: '2024 · Campaign Loop' },
-    'northlight':   { title: 'Northlight',   sub: '2024 · AI Editorial'  },
-  };
+  // --- Drag-to-reposition — single global state ---------------------
+  let activeDrag = null;
 
-  // Wire each work section for drag-drop and click upload
-  document.querySelectorAll('section.work').forEach(section => {
-    const workId = section.dataset.work;
-    const meta   = LANDING_WORKS[workId];
-    if (!meta) return;
-    const idbKey = `landing-${workId}`;
-    const inner  = section.querySelector('.work__inner');
+  window.addEventListener('mousemove', e => {
+    if (!activeDrag) return;
+    const dx = e.clientX - activeDrag.startX;
+    const dy = e.clientY - activeDrag.startY;
+    activeDrag.startX = e.clientX;
+    activeDrag.startY = e.clientY;
+    activeDrag.posX = Math.max(0, Math.min(100,
+      activeDrag.posX - dx * 100 / activeDrag.container.clientWidth));
+    activeDrag.posY = Math.max(0, Math.min(100,
+      activeDrag.posY - dy * 100 / activeDrag.container.clientHeight));
+    const media = activeDrag.container.querySelector('.work__media');
+    if (media) media.style.objectPosition = `${activeDrag.posX}% ${activeDrag.posY}%`;
+  });
 
-    // Inject edit overlay
+  window.addEventListener('mouseup', () => {
+    if (!activeDrag) return;
+    activeDrag.editLayer.style.cursor = '';
+    savePos(activeDrag.idbKey, activeDrag.posX, activeDrag.posY);
+    activeDrag = null;
+  });
+
+  // --- Wire one upload container (works for both .work__inner and .hero__media)
+  function wireContainer(section, container, idbKey, labelTitle, labelSub) {
+    // Edit overlay
     const editLayer = document.createElement('div');
     editLayer.className = 'work__editlayer';
     editLayer.innerHTML = `
-      <div class="el-label">${meta.title}<small>${meta.sub}</small></div>
+      <div class="el-label">${labelTitle}<small>${labelSub}</small></div>
       <div class="el-row">
         <button class="upload" type="button">Upload</button>
         <button class="danger remove" type="button">Remove</button>
-      </div>`;
-    inner.appendChild(editLayer);
+      </div>
+      <div class="el-drag-hint">Drag to reposition</div>`;
+    container.appendChild(editLayer);
 
     // Hidden file input
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'image/*,video/*';
     fileInput.className = 'work__fileinput';
-    inner.appendChild(fileInput);
+    container.appendChild(fileInput);
 
-    // Button events
+    // Upload / Remove buttons
     editLayer.querySelector('.upload').addEventListener('click', e => {
       e.stopPropagation(); fileInput.click();
     });
     editLayer.querySelector('.remove').addEventListener('click', async e => {
       e.stopPropagation();
       await idbDelete(idbKey);
-      renderWorkMedia(inner, null);
+      renderWorkMedia(container, null, idbKey);
     });
     fileInput.addEventListener('change', async e => {
       const f = e.target.files[0]; if (!f) return;
       await idbSet(idbKey, f);
-      renderWorkMedia(inner, f);
+      renderWorkMedia(container, f, idbKey);
       fileInput.value = '';
     });
 
-    // Drag and drop — attach to full-viewport section for easy targeting
+    // Drag-to-reposition: mousedown on overlay (not on buttons) starts drag
+    editLayer.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'BUTTON') return;
+      const media = container.querySelector('.work__media');
+      if (!media) return;
+      e.preventDefault();
+      // Read live position off the element so accumulated drags compose correctly
+      let posX = 50, posY = 50;
+      const raw = media.style.objectPosition;
+      if (raw) {
+        const parts = raw.split(' ');
+        posX = parseFloat(parts[0]) || 50;
+        posY = parseFloat(parts[1]) || 50;
+      }
+      activeDrag = { container, editLayer, idbKey, posX, posY,
+                     startX: e.clientX, startY: e.clientY };
+      editLayer.style.cursor = 'grabbing';
+    });
+
+    // Drag-drop file onto full-viewport section
     section.addEventListener('dragenter', e => {
       e.preventDefault();
       if (document.body.classList.contains('editing')) section.classList.add('is-dragover');
@@ -818,23 +900,53 @@
       if (!document.body.classList.contains('editing')) return;
       const f = e.dataTransfer.files[0]; if (!f) return;
       await idbSet(idbKey, f);
-      renderWorkMedia(inner, f);
+      renderWorkMedia(container, f, idbKey);
     });
+  }
+
+  // --- Wire hero section --------------------------------------------
+  wireContainer(
+    document.querySelector('section.hero'),
+    document.querySelector('.hero__media'),
+    'landing-hero',
+    'Showreel', 'Hero · Full Bleed'
+  );
+
+  // --- Wire the four work sections ----------------------------------
+  const LANDING_WORKS = {
+    'aether':       { title: 'Aether',       sub: '2025 · Brand Film'    },
+    'silent-bloom': { title: 'Silent Bloom', sub: '2025 · Editorial'     },
+    'vessel':       { title: 'Vessel',       sub: '2024 · Campaign Loop' },
+    'northlight':   { title: 'Northlight',   sub: '2024 · AI Editorial'  },
+  };
+
+  document.querySelectorAll('section.work').forEach(section => {
+    const workId = section.dataset.work;
+    const meta   = LANDING_WORKS[workId];
+    if (!meta) return;
+    wireContainer(section, section.querySelector('.work__inner'),
+                  `landing-${workId}`, meta.title, meta.sub);
   });
 
-  // Hydrate all four frames from IDB on page load
+  // --- Hydrate all containers from IDB on load ----------------------
   (async () => {
-    for (const [workId] of Object.entries(LANDING_WORKS)) {
-      const section = document.querySelector(`section.work[data-work="${workId}"]`);
-      if (!section) continue;
+    const slots = {
+      'landing-hero':         document.querySelector('.hero__media'),
+      'landing-aether':       document.querySelector('[data-work="aether"] .work__inner'),
+      'landing-silent-bloom': document.querySelector('[data-work="silent-bloom"] .work__inner'),
+      'landing-vessel':       document.querySelector('[data-work="vessel"] .work__inner'),
+      'landing-northlight':   document.querySelector('[data-work="northlight"] .work__inner'),
+    };
+    for (const [key, container] of Object.entries(slots)) {
+      if (!container) continue;
       try {
-        const blob = await idbGet(`landing-${workId}`);
-        if (blob) renderWorkMedia(section.querySelector('.work__inner'), blob);
+        const blob = await idbGet(key);
+        if (blob) renderWorkMedia(container, blob, key);
       } catch (_) {}
     }
   })();
 
-  // Edit mode toggle
+  // --- Edit mode toggle ---------------------------------------------
   document.getElementById('editToggle').addEventListener('click', () => {
     const on = !document.body.classList.contains('editing');
     document.body.classList.toggle('editing', on);
