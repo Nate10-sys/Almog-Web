@@ -68,12 +68,18 @@
     .wordmark .meta { font-size: 9px; letter-spacing: 0.18em; }
   }
 
-  /* ------- Works nav link (top right) ------- */
-  .nav-works {
+  /* ------- Top-right controls: Edit + Works ------- */
+  .topcontrols {
     position: fixed;
     top: 28px;
     right: 80px;
     z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    mix-blend-mode: difference;
+  }
+  .nav-works {
     font-family: var(--font-sans);
     font-size: 10px;
     font-weight: 300;
@@ -82,12 +88,32 @@
     color: var(--fg);
     text-decoration: none;
     opacity: 0.5;
-    mix-blend-mode: difference;
     transition: opacity 600ms var(--ease-out);
   }
   .nav-works:hover { opacity: 1; }
+  .edit-toggle {
+    background: transparent;
+    border: 1px solid rgba(245, 245, 240, 0.25);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: border-color 480ms var(--ease-out), background 480ms var(--ease-out);
+  }
+  .edit-toggle:hover { border-color: var(--fg); }
+  body.editing .edit-toggle {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
   @media (max-width: 720px) {
-    .nav-works { top: 22px; right: 72px; font-size: 9px; }
+    .topcontrols { top: 22px; right: 72px; gap: 16px; }
+    .nav-works { font-size: 9px; }
+    .edit-toggle { display: none; }
   }
 
   /* ------- Index counter (top right) ------- */
@@ -421,6 +447,103 @@
     .colophon { font-size: 8px; letter-spacing: 0.18em; }
   }
 
+  /* ------- Edit-mode upload UI ------- */
+  .work__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+  .work__fileinput { display: none; }
+
+  .work__editlayer {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(10, 10, 10, 0.55);
+    backdrop-filter: blur(2px);
+    border: 1px dashed rgba(245, 245, 240, 0.30);
+    pointer-events: none;
+  }
+  body.editing .work__editlayer { display: flex; pointer-events: auto; }
+  .work.is-dragover .work__editlayer {
+    background: rgba(245, 245, 240, 0.06);
+    border-color: var(--fg);
+  }
+  .work__editlayer .el-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.7;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .work__editlayer .el-label small {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    margin-top: 6px;
+    opacity: 0.55;
+  }
+  .work__editlayer .el-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .work__editlayer button {
+    background: transparent;
+    border: 1px solid rgba(245, 245, 240, 0.28);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: border-color 240ms var(--ease-out), background 240ms var(--ease-out);
+  }
+  .work__editlayer button:hover { border-color: var(--fg); }
+  .work__editlayer button.danger:hover { background: var(--fg); color: var(--bg); }
+
+  /* Edit notice banner */
+  .editbanner {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translateX(-50%);
+    z-index: 200;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(245, 245, 240, 0.18);
+    padding: 14px 28px;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 480ms var(--ease-out);
+    text-align: center;
+    white-space: nowrap;
+  }
+  body.editing .editbanner { opacity: 0.9; }
+  @media (max-width: 720px) {
+    .editbanner { white-space: normal; max-width: calc(100vw - 40px); font-size: 9px; letter-spacing: 0.18em; }
+  }
+
   /* respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -434,8 +557,11 @@
     Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
   </div>
 
-  <!-- top-right nav -->
-  <a href="works.html" class="nav-works">Works</a>
+  <!-- top-right controls -->
+  <div class="topcontrols">
+    <button class="edit-toggle" id="editToggle" type="button">Edit</button>
+    <a href="works.html" class="nav-works">Works</a>
+  </div>
 
   <!-- top-right index -->
   <div class="index-counter" id="indexCounter">
@@ -505,6 +631,8 @@
     </div>
   </section>
 
+  <div class="editbanner" id="editBanner">Edit mode is local to this browser — uploaded media is not visible to other visitors. Use this to preview your site.</div>
+
 <script>
   // --- Hero subhead reveal (after first viewport scroll past) -------
   const heroLine  = document.getElementById('heroLine');
@@ -557,6 +685,161 @@
   window.addEventListener('scroll', updateIndex, { passive: true });
   window.addEventListener('resize', updateIndex);
   updateIndex();
+
+  // ===================================================================
+  // Edit-mode upload — IndexedDB helpers
+  // Same store as works.html; landing keys prefixed "landing-" to avoid
+  // collisions with the gallery keys.
+  // ===================================================================
+  const DB_NAME = 'almog-gallery';
+  const STORE   = 'media';
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, val) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(val, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror    = () => reject(tx.error);
+    });
+  }
+  async function idbGet(key) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const r  = tx.objectStore(STORE).get(key);
+      r.onsuccess = () => resolve(r.result);
+      r.onerror   = () => reject(r.error);
+    });
+  }
+  async function idbDelete(key) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror    = () => reject(tx.error);
+    });
+  }
+
+  // Render or remove uploaded media inside a work__inner frame
+  function renderWorkMedia(inner, fileOrBlob) {
+    const old = inner.querySelector('.work__media');
+    if (old) old.remove();
+    if (!fileOrBlob) return;
+    const url = URL.createObjectURL(fileOrBlob);
+    const isVideo = (fileOrBlob.type || '').startsWith('video/');
+    let el;
+    if (isVideo) {
+      el = document.createElement('video');
+      el.src = url; el.muted = true; el.loop = true;
+      el.autoplay = true; el.playsInline = true; el.preload = 'metadata';
+    } else {
+      el = document.createElement('img');
+      el.src = url; el.alt = '';
+    }
+    el.className = 'work__media';
+    inner.insertBefore(el, inner.firstChild);
+  }
+
+  // Work metadata for edit-layer labels
+  const LANDING_WORKS = {
+    'aether':       { title: 'Aether',       sub: '2025 · Brand Film'    },
+    'silent-bloom': { title: 'Silent Bloom', sub: '2025 · Editorial'     },
+    'vessel':       { title: 'Vessel',       sub: '2024 · Campaign Loop' },
+    'northlight':   { title: 'Northlight',   sub: '2024 · AI Editorial'  },
+  };
+
+  // Wire each work section for drag-drop and click upload
+  document.querySelectorAll('section.work').forEach(section => {
+    const workId = section.dataset.work;
+    const meta   = LANDING_WORKS[workId];
+    if (!meta) return;
+    const idbKey = `landing-${workId}`;
+    const inner  = section.querySelector('.work__inner');
+
+    // Inject edit overlay
+    const editLayer = document.createElement('div');
+    editLayer.className = 'work__editlayer';
+    editLayer.innerHTML = `
+      <div class="el-label">${meta.title}<small>${meta.sub}</small></div>
+      <div class="el-row">
+        <button class="upload" type="button">Upload</button>
+        <button class="danger remove" type="button">Remove</button>
+      </div>`;
+    inner.appendChild(editLayer);
+
+    // Hidden file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,video/*';
+    fileInput.className = 'work__fileinput';
+    inner.appendChild(fileInput);
+
+    // Button events
+    editLayer.querySelector('.upload').addEventListener('click', e => {
+      e.stopPropagation(); fileInput.click();
+    });
+    editLayer.querySelector('.remove').addEventListener('click', async e => {
+      e.stopPropagation();
+      await idbDelete(idbKey);
+      renderWorkMedia(inner, null);
+    });
+    fileInput.addEventListener('change', async e => {
+      const f = e.target.files[0]; if (!f) return;
+      await idbSet(idbKey, f);
+      renderWorkMedia(inner, f);
+      fileInput.value = '';
+    });
+
+    // Drag and drop — attach to full-viewport section for easy targeting
+    section.addEventListener('dragenter', e => {
+      e.preventDefault();
+      if (document.body.classList.contains('editing')) section.classList.add('is-dragover');
+    });
+    section.addEventListener('dragover', e => e.preventDefault());
+    section.addEventListener('dragleave', e => {
+      if (!section.contains(e.relatedTarget)) section.classList.remove('is-dragover');
+    });
+    section.addEventListener('drop', async e => {
+      e.preventDefault();
+      section.classList.remove('is-dragover');
+      if (!document.body.classList.contains('editing')) return;
+      const f = e.dataTransfer.files[0]; if (!f) return;
+      await idbSet(idbKey, f);
+      renderWorkMedia(inner, f);
+    });
+  });
+
+  // Hydrate all four frames from IDB on page load
+  (async () => {
+    for (const [workId] of Object.entries(LANDING_WORKS)) {
+      const section = document.querySelector(`section.work[data-work="${workId}"]`);
+      if (!section) continue;
+      try {
+        const blob = await idbGet(`landing-${workId}`);
+        if (blob) renderWorkMedia(section.querySelector('.work__inner'), blob);
+      } catch (_) {}
+    }
+  })();
+
+  // Edit mode toggle
+  document.getElementById('editToggle').addEventListener('click', () => {
+    const on = !document.body.classList.contains('editing');
+    document.body.classList.toggle('editing', on);
+    document.getElementById('editToggle').textContent = on ? 'Done' : 'Edit';
+  });
 </script>
 </body>
 </html>
