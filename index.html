@@ -74,11 +74,6 @@
     top: 28px;
     right: 32px;
     z-index: 100;
-    font-family: var(--font-sans);
-    font-size: 10px;
-    font-weight: 300;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
     color: var(--fg);
     opacity: 0.6;
     mix-blend-mode: difference;
@@ -106,6 +101,8 @@
   /* ------- Hero ------- */
   .hero {
     padding: 0;
+    height: 100vh;
+    overflow: hidden;
   }
   .hero__media {
     position: absolute;
@@ -113,6 +110,7 @@
     width: 100vw;
     height: 100vh;
     background: #050505;
+    border: none;
     overflow: hidden;
   }
   /* placeholder "video" — barely-there panning luminance, no gradient flair */
