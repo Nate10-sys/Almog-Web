@@ -68,6 +68,22 @@
     .wordmark .meta { font-size: 9px; letter-spacing: 0.18em; }
   }
 
+  /* Wordmark hover — mini logo video (desktop, subsequent visits) */
+  .wordmark__text { transition: opacity 300ms var(--ease-out); }
+  .wordmark.is-logo-hovering .wordmark__text { opacity: 0; }
+  .wordmark__minivideo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 120px;
+    height: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms var(--ease-out);
+  }
+  .wordmark.is-logo-hovering .wordmark__minivideo { opacity: 1; }
+  @media (max-width: 720px) { .wordmark__minivideo { display: none; } }
+
   /* ------- Top-right controls: Edit + Works ------- */
   .topcontrols {
     position: fixed;
@@ -451,7 +467,8 @@
   .marquee-strip {
     position: relative;
     width: 100vw;
-    height: 100px;
+    height: 180px;
+    min-height: 0;
     background: #0A0A0A;
     overflow: hidden;
     /* Edge dissolve — images fade into the page rather than hard-cutting */
@@ -463,7 +480,7 @@
   .marquee__track {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 4px;
     height: 100%;
     width: max-content;
     animation: marquee 60s linear infinite;
@@ -481,8 +498,8 @@
     flex-shrink: 0;
   }
   .marquee__img {
-    height: 100px;
-    width: 100px;
+    height: 180px;
+    width: 180px;
     object-fit: cover;
     display: block;
     pointer-events: none;
@@ -736,8 +753,9 @@
   </div>
 
   <!-- top-left wordmark -->
-  <div class="wordmark">
-    Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
+  <div class="wordmark" id="wordmark">
+    <span class="wordmark__text">Almog<span class="dot"></span><span class="meta">AI Visual Studio</span></span>
+    <video class="wordmark__minivideo" id="wordmarkVideo" src="assets/logo.mp4" muted playsinline preload="metadata"></video>
   </div>
 
   <!-- top-right controls -->
@@ -871,7 +889,8 @@
 
 <script>
   // ===================================================================
-  // Logo intro — plays once per browser session (sessionStorage gate)
+  // Logo intro — plays once ever (localStorage gate).
+  // Subsequent visits: wordmark becomes a hover mini-logo trigger.
   // ===================================================================
   (function () {
     const overlay = document.getElementById('logoIntro');
@@ -879,13 +898,14 @@
     if (!overlay || !video) return;
 
     function dismiss() {
-      sessionStorage.setItem('logo-intro-seen', '1');
+      localStorage.setItem('logo-intro-played', '1');
       overlay.classList.add('is-fading');
       setTimeout(() => overlay.classList.add('is-gone'), 650);
     }
 
-    if (sessionStorage.getItem('logo-intro-seen')) {
+    if (localStorage.getItem('logo-intro-played')) {
       overlay.classList.add('is-gone');
+      wireWordmarkHover();
       return;
     }
 
@@ -893,6 +913,29 @@
     video.addEventListener('ended', () => { clearTimeout(fallback); dismiss(); });
     video.play().catch(dismiss);
   })();
+
+  // Wordmark hover — desktop only, subsequent visits
+  function wireWordmarkHover() {
+    if (!window.matchMedia('(min-width: 721px)').matches) return;
+    const wordmark  = document.getElementById('wordmark');
+    const miniVideo = document.getElementById('wordmarkVideo');
+    if (!wordmark || !miniVideo) return;
+
+    function showVideo() {
+      wordmark.classList.add('is-logo-hovering');
+      miniVideo.currentTime = 0;
+      miniVideo.play().catch(() => {});
+    }
+    function showText() {
+      wordmark.classList.remove('is-logo-hovering');
+      miniVideo.pause();
+      miniVideo.currentTime = 0;
+    }
+
+    wordmark.addEventListener('mouseenter', showVideo);
+    wordmark.addEventListener('mouseleave', showText);
+    miniVideo.addEventListener('ended', showText);
+  }
 
   // --- Hero subhead reveal (after first viewport scroll past) -------
   const heroLine  = document.getElementById('heroLine');
@@ -1202,14 +1245,16 @@
       .forEach(img => { img.src = src; });
   }
 
-  // × remove buttons
-  document.querySelectorAll('.marquee__item[data-index] .marquee__remove').forEach(btn => {
-    const idx = parseInt(btn.closest('.marquee__item').dataset.index, 10);
-    btn.addEventListener('click', async e => {
-      e.stopPropagation();
-      await idbDelete(`marquee-${idx}`);
-      setMarqueeSlot(idx, MARQUEE_PLACEHOLDERS[idx - 1]);
-    });
+  // × remove — event delegation so it works regardless of src/state changes
+  document.getElementById('marqueeTrack').addEventListener('click', async e => {
+    const btn = e.target.closest('.marquee__remove');
+    if (!btn) return;
+    const item = btn.closest('.marquee__item[data-index]');
+    if (!item) return;
+    const idx = parseInt(item.dataset.index, 10);
+    e.stopPropagation();
+    await idbDelete(`marquee-${idx}`);
+    setMarqueeSlot(idx, MARQUEE_PLACEHOLDERS[idx - 1]);
   });
 
   // Drag-drop onto the marquee section (up to 7 files at once)
