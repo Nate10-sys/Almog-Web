@@ -451,7 +451,7 @@
   .marquee-strip {
     position: relative;
     width: 100vw;
-    height: 200px;
+    height: 100px;
     background: #0A0A0A;
     overflow: hidden;
     /* Edge dissolve — images fade into the page rather than hard-cutting */
@@ -481,11 +481,13 @@
     flex-shrink: 0;
   }
   .marquee__img {
-    height: 100%;
-    width: auto;
+    height: 100px;
+    width: 100px;
+    object-fit: cover;
     display: block;
     pointer-events: none;
     user-select: none;
+    flex-shrink: 0;
   }
 
   /* × remove button per image (visible in edit mode, originals only) */
@@ -526,6 +528,10 @@
     background: rgba(245, 245, 240, 0.04);
     border-color: rgba(245, 245, 240, 0.6);
   }
+  .marquee__editlayer {
+    flex-direction: column;
+    gap: 6px;
+  }
   .marquee__editlabel {
     font-family: var(--font-sans);
     font-size: 10px;
@@ -536,6 +542,32 @@
     opacity: 0.45;
     user-select: none;
   }
+  .marquee__editsub {
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.28;
+    user-select: none;
+  }
+  .marquee__uploadbtn {
+    margin-top: 6px;
+    background: transparent;
+    border: 1px solid rgba(245, 245, 240, 0.28);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: border-color 240ms var(--ease-out), background 240ms var(--ease-out);
+  }
+  .marquee__uploadbtn:hover { border-color: var(--fg); }
 
   /* ------- Edit-mode upload UI ------- */
   .work__media {
@@ -667,6 +699,27 @@
     .editbanner { white-space: normal; max-width: calc(100vw - 40px); font-size: 9px; letter-spacing: 0.18em; }
   }
 
+  /* ------- Logo intro overlay (plays once per session) ------- */
+  .logo-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    opacity: 1;
+    transition: opacity 600ms var(--ease-out);
+  }
+  .logo-intro.is-fading { opacity: 0; pointer-events: none; }
+  .logo-intro.is-gone   { display: none; }
+  .logo-intro__video {
+    width: min(380px, 90vw);
+    height: auto;
+    display: block;
+  }
+
   /* respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -674,6 +727,13 @@
 </style>
 </head>
 <body>
+
+  <!-- Logo intro — full-screen overlay, plays once per session -->
+  <div class="logo-intro" id="logoIntro">
+    <video class="logo-intro__video" id="logoVideo"
+           src="assets/logo.mp4"
+           muted playsinline preload="auto"></video>
+  </div>
 
   <!-- top-left wordmark -->
   <div class="wordmark">
@@ -760,6 +820,9 @@
     <!-- Edit-mode drop-zone label -->
     <div class="marquee__editlayer" id="marqueeEditLayer">
       <span class="marquee__editlabel">Drop images here to replace marquee · 7 slots</span>
+      <span class="marquee__editsub">(up to 7)</span>
+      <button class="marquee__uploadbtn" id="marqueeUploadBtn" type="button">Upload Photos</button>
+      <input type="file" accept="image/*" multiple id="marqueeFileInput" class="work__fileinput">
     </div>
   </section>
 
@@ -807,6 +870,30 @@
   <div class="editbanner" id="editBanner">Edit mode is local to this browser — uploaded media is not visible to other visitors. Use this to preview your site.</div>
 
 <script>
+  // ===================================================================
+  // Logo intro — plays once per browser session (sessionStorage gate)
+  // ===================================================================
+  (function () {
+    const overlay = document.getElementById('logoIntro');
+    const video   = document.getElementById('logoVideo');
+    if (!overlay || !video) return;
+
+    function dismiss() {
+      sessionStorage.setItem('logo-intro-seen', '1');
+      overlay.classList.add('is-fading');
+      setTimeout(() => overlay.classList.add('is-gone'), 650);
+    }
+
+    if (sessionStorage.getItem('logo-intro-seen')) {
+      overlay.classList.add('is-gone');
+      return;
+    }
+
+    const fallback = setTimeout(dismiss, 6500);
+    video.addEventListener('ended', () => { clearTimeout(fallback); dismiss(); });
+    video.play().catch(dismiss);
+  })();
+
   // --- Hero subhead reveal (after first viewport scroll past) -------
   const heroLine  = document.getElementById('heroLine');
   const scrollCue = document.getElementById('scrollCue');
@@ -1146,6 +1233,22 @@
       await idbSet(`marquee-${idx}`, f);
       setMarqueeSlot(idx, URL.createObjectURL(f));
     }
+  });
+
+  // Upload button — opens file picker for marquee slots
+  const marqueeFileInput = document.getElementById('marqueeFileInput');
+  document.getElementById('marqueeUploadBtn').addEventListener('click', e => {
+    e.stopPropagation(); marqueeFileInput.click();
+  });
+  marqueeFileInput.addEventListener('change', async e => {
+    const files = [...e.target.files].slice(0, MARQUEE_COUNT);
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const idx = i + 1;
+      await idbSet(`marquee-${idx}`, f);
+      setMarqueeSlot(idx, URL.createObjectURL(f));
+    }
+    marqueeFileInput.value = '';
   });
 
   // Hydrate from IDB on load
