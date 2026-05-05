@@ -467,7 +467,7 @@
   .marquee-strip {
     position: relative;
     width: 100vw;
-    height: 180px;
+    height: 240px;
     min-height: 0;
     background: #0A0A0A;
     overflow: hidden;
@@ -480,7 +480,7 @@
   .marquee__track {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     height: 100%;
     width: max-content;
     animation: marquee 60s linear infinite;
@@ -498,8 +498,8 @@
     flex-shrink: 0;
   }
   .marquee__img {
-    height: 180px;
-    width: 180px;
+    height: 240px;
+    width: 240px;
     object-fit: cover;
     display: block;
     pointer-events: none;
@@ -716,25 +716,26 @@
     .editbanner { white-space: normal; max-width: calc(100vw - 40px); font-size: 9px; letter-spacing: 0.18em; }
   }
 
-  /* ------- Logo intro overlay (plays once per session) ------- */
-  .logo-intro {
+  /* ------- Permanent bottom-right logo ------- */
+  .logo-corner {
     position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: all;
-    opacity: 1;
-    transition: opacity 600ms var(--ease-out);
-  }
-  .logo-intro.is-fading { opacity: 0; pointer-events: none; }
-  .logo-intro.is-gone   { display: none; }
-  .logo-intro__video {
-    width: min(380px, 90vw);
-    height: auto;
+    bottom: 24px;
+    right: 32px;
+    z-index: 50;
+    width: 80px;
+    height: 80px;
+    opacity: 0.7;
+    mix-blend-mode: screen;
+    transition: opacity 400ms ease;
     display: block;
+    pointer-events: auto;
+  }
+  .logo-corner:hover { opacity: 1; }
+
+  /* In edit mode, lift the mask so × buttons are fully visible */
+  body.editing .marquee-strip {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   /* respect reduced motion */
@@ -744,13 +745,6 @@
 </style>
 </head>
 <body>
-
-  <!-- Logo intro — full-screen overlay, plays once per session -->
-  <div class="logo-intro" id="logoIntro">
-    <video class="logo-intro__video" id="logoVideo"
-           src="assets/logo.mp4"
-           muted playsinline preload="auto"></video>
-  </div>
 
   <!-- top-left wordmark -->
   <div class="wordmark" id="wordmark">
@@ -885,36 +879,14 @@
     </div>
   </section>
 
+  <!-- Permanent bottom-right logo -->
+  <video class="logo-corner" src="assets/logo.mp4" autoplay muted loop playsinline></video>
+
   <div class="editbanner" id="editBanner">Edit mode is local to this browser — uploaded media is not visible to other visitors. Use this to preview your site.</div>
 
 <script>
-  // ===================================================================
-  // Logo intro — plays once ever (localStorage gate).
-  // Subsequent visits: wordmark becomes a hover mini-logo trigger.
-  // ===================================================================
-  (function () {
-    const overlay = document.getElementById('logoIntro');
-    const video   = document.getElementById('logoVideo');
-    if (!overlay || !video) return;
-
-    function dismiss() {
-      localStorage.setItem('logo-intro-played', '1');
-      overlay.classList.add('is-fading');
-      setTimeout(() => overlay.classList.add('is-gone'), 650);
-    }
-
-    if (localStorage.getItem('logo-intro-played')) {
-      overlay.classList.add('is-gone');
-      wireWordmarkHover();
-      return;
-    }
-
-    const fallback = setTimeout(dismiss, 6500);
-    video.addEventListener('ended', () => { clearTimeout(fallback); dismiss(); });
-    video.play().catch(dismiss);
-  })();
-
-  // Wordmark hover — desktop only, subsequent visits
+  // Wordmark hover — desktop only
+  wireWordmarkHover();
   function wireWordmarkHover() {
     if (!window.matchMedia('(min-width: 721px)').matches) return;
     const wordmark  = document.getElementById('wordmark');
