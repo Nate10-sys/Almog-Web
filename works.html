@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Works — Almog</title>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  :root {
+    --jet-black:  #0A0A0A;
+    --soft-white: #F5F5F0;
+    --bg: #0A0A0A;
+    --fg: #F5F5F0;
+    --fg-2: rgba(245, 245, 240, 0.55);
+    --fg-3: rgba(245, 245, 240, 0.40);
+    --line: rgba(245, 245, 240, 0.08);
+    --line-2: rgba(245, 245, 240, 0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--fg); color: var(--bg); }
+  a { color: inherit; text-decoration: none; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+  .topbar a, .topbar button { color: var(--fg); }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    mix-blend-mode: difference;
+  }
+  .wordmark .dot {
+    display: inline-block;
+    width: 4px; height: 4px;
+    background: var(--fg);
+    border-radius: 50%;
+    margin: 0 10px 4px 10px;
+    vertical-align: middle;
+    opacity: 0.7;
+  }
+  .wordmark .meta {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  .topnav {
+    display: flex;
+    align-items: center;
+    gap: 44px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    mix-blend-mode: difference;
+  }
+  .topnav a {
+    position: relative;
+    padding-bottom: 4px;
+    opacity: 0.7;
+    transition: opacity 480ms var(--ease-out);
+  }
+  .topnav a:hover { opacity: 1; }
+  .topnav a.is-active { opacity: 1; }
+  .topnav a.is-active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: var(--fg);
+  }
+
+  .edit-toggle {
+    background: transparent;
+    border: 1px solid rgba(245, 245, 240, 0.25);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: border-color 480ms var(--ease-out), background 480ms var(--ease-out);
+  }
+  .edit-toggle:hover { border-color: var(--fg); }
+  body.editing .edit-toggle {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+
+  @media (max-width: 720px) {
+    .topbar { height: 64px; padding: 0 20px; }
+    .wordmark { font-size: 18px; }
+    .topnav { gap: 24px; font-size: 10px; }
+    .edit-toggle { padding: 7px 12px; font-size: 9px; }
+  }
+
+  /* ---------- Gallery ---------- */
+  .gallery {
+    padding: 160px 64px 192px;
+    max-width: 1680px;
+    margin: 0 auto;
+  }
+  .gallery__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 96px;
+  }
+  .gallery__eyebrow {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.5;
+  }
+  .gallery__count {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--fg);
+    opacity: 0.45;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px 32px;
+  }
+  @media (max-width: 1024px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 32px 24px; } }
+  @media (max-width: 640px)  { .grid { grid-template-columns: 1fr; gap: 32px; } }
+  @media (max-width: 1024px) { .gallery { padding: 120px 32px 128px; } .gallery__head { margin-bottom: 64px; } }
+  @media (max-width: 640px)  { .gallery { padding: 100px 20px 96px; } }
+
+  /* ---------- Tile ---------- */
+  .tile {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 5;
+    background: #050505;
+    overflow: hidden;
+    cursor: pointer;
+
+    /* enter state */
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 1200ms var(--ease-out), transform 1200ms var(--ease-out);
+  }
+  .tile.is-in { opacity: 1; transform: translateY(0); }
+
+  .tile__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1200ms var(--ease-out), opacity 800ms var(--ease-out);
+  }
+  .tile:hover .tile__media { transform: scale(1.02); }
+
+  /* empty-state subtle index number */
+  .tile__empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 24px;
+    letter-spacing: 0.02em;
+    color: var(--fg);
+    opacity: 0.18;
+    transition: opacity 480ms var(--ease-out);
+    pointer-events: none;
+  }
+  .tile.has-media .tile__empty { opacity: 0; }
+
+  /* hairline edge — only visible on empty tiles */
+  .tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--line);
+    transition: opacity 480ms var(--ease-out);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .tile.has-media::before { opacity: 0; }
+
+  /* hover metadata: fades in at bottom-left */
+  .tile__meta {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  .tile:hover .tile__meta { opacity: 1; transform: translateY(0); }
+  .tile__title {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: var(--fg);
+  }
+  .tile__sub {
+    margin-top: 8px;
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.7;
+  }
+  .tile__sub .sep {
+    display: inline-block;
+    width: 14px; height: 1px;
+    background: var(--fg);
+    opacity: 0.5;
+    margin: 3px 10px;
+    vertical-align: middle;
+  }
+
+  /* gradient backdrop only when media present, so meta stays legible */
+  .tile.has-media .tile__meta::before {
+    content: "";
+    position: absolute;
+    left: -18px; right: -100%; bottom: -18px;
+    height: 120px;
+    background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* ---------- Edit-mode UI ---------- */
+  .tile__editlayer {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(10, 10, 10, 0.55);
+    backdrop-filter: blur(2px);
+    border: 1px dashed rgba(245, 245, 240, 0.30);
+    pointer-events: none;
+  }
+  body.editing .tile { cursor: default; }
+  body.editing .tile__editlayer { display: flex; pointer-events: auto; }
+  body.editing .tile__media { pointer-events: none; }
+
+  .tile__editlayer .label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.7;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .tile__editlayer .label small {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    margin-top: 6px;
+    opacity: 0.55;
+  }
+  .tile__editlayer .row {
+    display: flex; gap: 14px;
+    margin-top: 8px;
+  }
+  .tile__editlayer button {
+    background: transparent;
+    border: 1px solid rgba(245, 245, 240, 0.28);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: border-color 240ms var(--ease-out), background 240ms var(--ease-out);
+  }
+  .tile__editlayer button:hover { border-color: var(--fg); }
+  .tile__editlayer button.danger:hover { background: var(--fg); color: var(--bg); }
+
+  .tile.is-dragover .tile__editlayer {
+    background: rgba(245, 245, 240, 0.06);
+    border-color: var(--fg);
+  }
+
+  /* hidden file input per tile */
+  .tile__fileinput { display: none; }
+
+  /* edit-mode disables click-navigation */
+  body.editing .tile__nav { pointer-events: none; }
+
+  /* ---------- Help banner shown only in edit mode ---------- */
+  .editbanner {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translateX(-50%);
+    z-index: 200;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--line-2);
+    padding: 14px 28px;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 480ms var(--ease-out);
+    text-align: center;
+    max-width: calc(100vw - 40px);
+  }
+  body.editing .editbanner { opacity: 0.95; }
+
+  /* ---------- Footer ---------- */
+  .gallery__foot {
+    margin-top: 192px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.4;
+  }
+  @media (max-width: 1024px) { .gallery__foot { margin-top: 128px; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <a href="Almog Landing.html" class="wordmark">
+      Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
+    </a>
+    <nav class="topnav">
+      <a href="Almog Landing.html">Index</a>
+      <a href="Almog Works.html" class="is-active">Works</a>
+      <button class="edit-toggle" id="editToggle" type="button">Edit</button>
+    </nav>
+  </div>
+
+  <main class="gallery">
+    <header class="gallery__head">
+      <span class="gallery__eyebrow">Selected Works · 2022 — 2025</span>
+      <span class="gallery__count" id="galleryCount">twelve pieces</span>
+    </header>
+
+    <div class="grid" id="grid"></div>
+
+    <footer class="gallery__foot">
+      <span>© Almog Gabay · 2026</span>
+      <span>Tel Aviv ⇄ Worldwide</span>
+    </footer>
+  </main>
+
+  <div class="editbanner" id="editBanner">
+    Drag a file onto a tile · or click upload · changes save locally
+  </div>
+
+<script>
+/* =========================================================================
+   Data — 12 curated works
+   ========================================================================= */
+const WORKS = [
+  { id: 'aether',        title: 'Aether',        year: 2025, format: 'Brand Film' },
+  { id: 'silent-bloom',  title: 'Silent Bloom',  year: 2025, format: 'Editorial' },
+  { id: 'vessel',        title: 'Vessel',        year: 2024, format: 'Campaign Loop' },
+  { id: 'northlight',    title: 'Northlight',    year: 2024, format: 'AI Editorial' },
+  { id: 'halo',          title: 'Halo',          year: 2024, format: 'Brand Film' },
+  { id: 'ferrum',        title: 'Ferrum',        year: 2024, format: 'Editorial' },
+  { id: 'mira',          title: 'Mira',          year: 2023, format: 'Campaign' },
+  { id: 'echo-chamber',  title: 'Echo Chamber',  year: 2023, format: 'AI Visual' },
+  { id: 'pale-horse',    title: 'Pale Horse',    year: 2023, format: 'Editorial' },
+  { id: 'dust-and-light',title: 'Dust & Light',  year: 2023, format: 'Brand Film' },
+  { id: 'veil',          title: 'Veil',          year: 2022, format: 'Editorial' },
+  { id: 'ode',           title: 'Ode',           year: 2022, format: 'AI Editorial' },
+];
+
+/* =========================================================================
+   IndexedDB — small wrapper for storing media Blobs
+   localStorage can't hold videos; IDB can.
+   ========================================================================= */
+const DB_NAME = 'almog-gallery';
+const STORE   = 'media';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+async function idbSet(key, val) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(val, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+async function idbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const r = tx.objectStore(STORE).get(key);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror   = () => reject(r.error);
+  });
+}
+async function idbDelete(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+/* =========================================================================
+   Build grid
+   ========================================================================= */
+const grid = document.getElementById('grid');
+const tiles = [];
+
+WORKS.forEach((w, i) => {
+  const tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.dataset.id = w.id;
+  tile.dataset.index = String(i + 1).padStart(2, '0');
+  tile.style.transitionDelay = `${(i % 3) * 80}ms`;
+
+  tile.innerHTML = `
+    <a class="tile__nav" href="Almog Project.html?id=${w.id}" aria-label="${w.title}" style="position:absolute;inset:0;z-index:6;"></a>
+    <div class="tile__empty">${tile.dataset.index}</div>
+    <div class="tile__meta">
+      <div class="tile__title">${w.title}</div>
+      <div class="tile__sub">${w.year}<span class="sep"></span>${w.format}</div>
+    </div>
+    <div class="tile__editlayer">
+      <div class="label">${w.title}<small>${w.year} · ${w.format}</small></div>
+      <div class="row">
+        <button class="upload" type="button">Upload</button>
+        <button class="danger remove" type="button">Remove</button>
+      </div>
+    </div>
+    <input class="tile__fileinput" type="file" accept="image/*,video/*">
+  `;
+  grid.appendChild(tile);
+  tiles.push(tile);
+
+  // wire drag-drop
+  const fileInput = tile.querySelector('.tile__fileinput');
+  const uploadBtn = tile.querySelector('button.upload');
+  const removeBtn = tile.querySelector('button.remove');
+
+  uploadBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); fileInput.click(); });
+  removeBtn.addEventListener('click', async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    await idbDelete(w.id);
+    renderTileMedia(tile, null);
+  });
+  fileInput.addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    await saveAndRender(tile, f);
+    fileInput.value = '';
+  });
+
+  tile.addEventListener('dragenter', (e) => { e.preventDefault(); if (document.body.classList.contains('editing')) tile.classList.add('is-dragover'); });
+  tile.addEventListener('dragover',  (e) => { e.preventDefault(); });
+  tile.addEventListener('dragleave', (e) => { tile.classList.remove('is-dragover'); });
+  tile.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    tile.classList.remove('is-dragover');
+    if (!document.body.classList.contains('editing')) return;
+    const f = e.dataTransfer.files[0]; if (!f) return;
+    await saveAndRender(tile, f);
+  });
+});
+
+async function saveAndRender(tile, file) {
+  await idbSet(tile.dataset.id, file);
+  renderTileMedia(tile, file);
+}
+
+function renderTileMedia(tile, fileOrBlob) {
+  // remove existing media element (if any)
+  const old = tile.querySelector('.tile__media');
+  if (old) old.remove();
+  if (!fileOrBlob) {
+    tile.classList.remove('has-media');
+    return;
+  }
+  const url = URL.createObjectURL(fileOrBlob);
+  const isVideo = (fileOrBlob.type || '').startsWith('video/');
+  let el;
+  if (isVideo) {
+    el = document.createElement('video');
+    el.src = url;
+    el.muted = true;
+    el.loop = true;
+    el.autoplay = true;
+    el.playsInline = true;
+    el.preload = 'metadata';
+  } else {
+    el = document.createElement('img');
+    el.src = url;
+    el.alt = '';
+  }
+  el.className = 'tile__media';
+  // insert before nav so it sits behind it
+  tile.insertBefore(el, tile.firstChild);
+  tile.classList.add('has-media');
+}
+
+/* hydrate from IDB */
+(async () => {
+  for (const w of WORKS) {
+    const tile = grid.querySelector(`[data-id="${w.id}"]`);
+    try {
+      const blob = await idbGet(w.id);
+      if (blob) renderTileMedia(tile, blob);
+    } catch (err) { /* ignore */ }
+  }
+})();
+
+/* =========================================================================
+   Edit-mode toggle
+   ========================================================================= */
+const editToggle = document.getElementById('editToggle');
+editToggle.addEventListener('click', () => {
+  const on = !document.body.classList.contains('editing');
+  document.body.classList.toggle('editing', on);
+  editToggle.textContent = on ? 'Done' : 'Edit';
+});
+
+/* =========================================================================
+   Stagger fade-in on scroll
+   ========================================================================= */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+}, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+tiles.forEach(t => io.observe(t));
+</script>
+</body>
+</html>
