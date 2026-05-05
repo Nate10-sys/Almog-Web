@@ -447,6 +447,96 @@
     .colophon { font-size: 8px; letter-spacing: 0.18em; }
   }
 
+  /* ------- Marquee strip ------- */
+  .marquee-strip {
+    position: relative;
+    width: 100vw;
+    height: 200px;
+    background: #0A0A0A;
+    overflow: hidden;
+    /* Edge dissolve — images fade into the page rather than hard-cutting */
+    -webkit-mask-image: linear-gradient(to right,
+      transparent 0, #000 80px, #000 calc(100% - 80px), transparent 100%);
+    mask-image: linear-gradient(to right,
+      transparent 0, #000 80px, #000 calc(100% - 80px), transparent 100%);
+  }
+  .marquee__track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 100%;
+    width: max-content;
+    animation: marquee 60s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  /* Stop and reset when editing so × buttons are reachable */
+  body.editing .marquee__track { animation: none; transform: translateX(0); }
+
+  .marquee__item {
+    position: relative;
+    height: 100%;
+    flex-shrink: 0;
+  }
+  .marquee__img {
+    height: 100%;
+    width: auto;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* × remove button per image (visible in edit mode, originals only) */
+  .marquee__remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px; height: 22px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 10, 10, 0.80);
+    border: 1px solid rgba(245, 245, 240, 0.40);
+    color: var(--fg);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 20;
+    padding: 0;
+    transition: background 240ms var(--ease-out), border-color 240ms var(--ease-out);
+  }
+  .marquee__remove:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  body.editing .marquee__item .marquee__remove { display: flex; }
+
+  /* Centered drop-zone label (edit mode only) */
+  .marquee__editlayer {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(245, 245, 240, 0.22);
+    pointer-events: none;
+  }
+  body.editing .marquee__editlayer { display: flex; }
+  .marquee-strip.is-dragover .marquee__editlayer {
+    background: rgba(245, 245, 240, 0.04);
+    border-color: rgba(245, 245, 240, 0.6);
+  }
+  .marquee__editlabel {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.45;
+    user-select: none;
+  }
+
   /* ------- Edit-mode upload UI ------- */
   .work__media {
     position: absolute;
@@ -623,6 +713,56 @@
     </div>
   </section>
 
+  <!-- MARQUEE STRIP — between Aether and Silent Bloom -->
+  <section class="marquee-strip" data-section="marquee" aria-label="Selected imagery">
+    <div class="marquee__track" id="marqueeTrack">
+
+      <!-- ── Original set (data-index 1–7) ── -->
+      <div class="marquee__item" data-index="1">
+        <img class="marquee__img" data-index="1" src="https://picsum.photos/seed/almog1/600/800" alt="">
+        <button class="marquee__remove" type="button" aria-label="Remove image 1">×</button>
+      </div>
+      <div class="marquee__item" data-index="2">
+        <img class="marquee__img" data-index="2" src="https://picsum.photos/seed/almog2/900/600" alt="">
+        <button class="marquee__remove" type="button" aria-label="Remove image 2">×</button>
+      </div>
+      <div class="marquee__item" data-index="3">
+        <img class="marquee__img" data-index="3" src="https://picsum.photos/seed/almog3/700/900" alt="">
+        <button class="marquee__remove" type="button" aria-label="Remove image 3">×</button>
+      </div>
+      <div class="marquee__item" data-index="4">
+        <img class="marquee__img" data-index="4" src="https://picsum.photos/seed/almog4/800/600" alt="">
+        <button class="marquee__remove" type="button" aria-label="Remove image 4">×</button>
+      </div>
+      <div class="marquee__item" data-index="5">
+        <img class="marquee__img" data-index="5" src="https://picsum.photos/seed/almog5/500/700" alt="">
+        <button class="marquee__remove" type="button" aria-label="Remove image 5">×</button>
+      </div>
+      <div class="marquee__item" data-index="6">
+        <img class="marquee__img" data-index="6" src="https://picsum.photos/seed/almog6/1000/650" alt="">
+        <button class="marquee__remove" type="button" aria-label="Remove image 6">×</button>
+      </div>
+      <div class="marquee__item" data-index="7">
+        <img class="marquee__img" data-index="7" src="https://picsum.photos/seed/almog7/600/800" alt="">
+        <button class="marquee__remove" type="button" aria-label="Remove image 7">×</button>
+      </div>
+
+      <!-- ── Duplicate set — seamless loop (aria-hidden, no buttons) ── -->
+      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="1" src="https://picsum.photos/seed/almog1/600/800" alt=""></div>
+      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="2" src="https://picsum.photos/seed/almog2/900/600" alt=""></div>
+      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="3" src="https://picsum.photos/seed/almog3/700/900" alt=""></div>
+      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="4" src="https://picsum.photos/seed/almog4/800/600" alt=""></div>
+      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="5" src="https://picsum.photos/seed/almog5/500/700" alt=""></div>
+      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="6" src="https://picsum.photos/seed/almog6/1000/650" alt=""></div>
+      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="7" src="https://picsum.photos/seed/almog7/600/800" alt=""></div>
+
+    </div>
+    <!-- Edit-mode drop-zone label -->
+    <div class="marquee__editlayer" id="marqueeEditLayer">
+      <span class="marquee__editlabel">Drop images here to replace marquee · 7 slots</span>
+    </div>
+  </section>
+
   <section class="work" data-screen-label="03 Silent Bloom" data-section="work" data-work="silent-bloom" data-index="02">
     <div class="work__inner">
       <div class="work__meta">
@@ -703,7 +843,7 @@
   works.forEach(el => io.observe(el));
 
   // --- Update top-right index counter --------------------------------
-  const sections = [...document.querySelectorAll('section')];
+  const sections = [...document.querySelectorAll('section:not(.marquee-strip)')];
   const idxLabels = ['00', '01', '02', '03', '04', '∞']; // hero, 4 works, cta
   function updateIndex() {
     const mid = window.scrollY + window.innerHeight / 2;
@@ -952,6 +1092,71 @@
     document.body.classList.toggle('editing', on);
     document.getElementById('editToggle').textContent = on ? 'Done' : 'Edit';
   });
+
+  // ===================================================================
+  // Marquee strip — IDB upload, hydration, × remove
+  // Keys: marquee-1 … marquee-7 (same "almog-gallery/media" IDB store)
+  // Placeholders swapped in if no IDB blob for that slot.
+  // ===================================================================
+  const MARQUEE_COUNT = 7;
+  const MARQUEE_PLACEHOLDERS = [
+    'https://picsum.photos/seed/almog1/600/800',
+    'https://picsum.photos/seed/almog2/900/600',
+    'https://picsum.photos/seed/almog3/700/900',
+    'https://picsum.photos/seed/almog4/800/600',
+    'https://picsum.photos/seed/almog5/500/700',
+    'https://picsum.photos/seed/almog6/1000/650',
+    'https://picsum.photos/seed/almog7/600/800',
+  ];
+
+  // Helper: update every img[data-index="n"] in the track (original + duplicate)
+  function setMarqueeSlot(idx, src) {
+    document.querySelectorAll(`#marqueeTrack .marquee__img[data-index="${idx}"]`)
+      .forEach(img => { img.src = src; });
+  }
+
+  // × remove buttons
+  document.querySelectorAll('.marquee__item[data-index] .marquee__remove').forEach(btn => {
+    const idx = parseInt(btn.closest('.marquee__item').dataset.index, 10);
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      await idbDelete(`marquee-${idx}`);
+      setMarqueeSlot(idx, MARQUEE_PLACEHOLDERS[idx - 1]);
+    });
+  });
+
+  // Drag-drop onto the marquee section (up to 7 files at once)
+  const marqueeSection = document.querySelector('.marquee-strip');
+  marqueeSection.addEventListener('dragenter', e => {
+    e.preventDefault();
+    if (document.body.classList.contains('editing')) marqueeSection.classList.add('is-dragover');
+  });
+  marqueeSection.addEventListener('dragover', e => e.preventDefault());
+  marqueeSection.addEventListener('dragleave', e => {
+    if (!marqueeSection.contains(e.relatedTarget)) marqueeSection.classList.remove('is-dragover');
+  });
+  marqueeSection.addEventListener('drop', async e => {
+    e.preventDefault();
+    marqueeSection.classList.remove('is-dragover');
+    if (!document.body.classList.contains('editing')) return;
+    const files = [...e.dataTransfer.files].slice(0, MARQUEE_COUNT);
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const idx = i + 1;
+      await idbSet(`marquee-${idx}`, f);
+      setMarqueeSlot(idx, URL.createObjectURL(f));
+    }
+  });
+
+  // Hydrate from IDB on load
+  (async () => {
+    for (let idx = 1; idx <= MARQUEE_COUNT; idx++) {
+      try {
+        const blob = await idbGet(`marquee-${idx}`);
+        if (blob) setMarqueeSlot(idx, URL.createObjectURL(blob));
+      } catch (_) {}
+    }
+  })();
 </script>
 </body>
 </html>
