@@ -386,12 +386,12 @@
 
   <!-- Top bar -->
   <div class="topbar">
-    <a href="Almog Landing.html" class="wordmark">
+    <a href="index.html" class="wordmark">
       Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
     </a>
     <nav class="topnav">
-      <a href="Almog Landing.html">Index</a>
-      <a href="Almog Works.html" class="is-active">Works</a>
+      <a href="index.html">Index</a>
+      <a href="works.html" class="is-active">Works</a>
       <button class="edit-toggle" id="editToggle" type="button">Edit</button>
     </nav>
   </div>
@@ -493,7 +493,7 @@ WORKS.forEach((w, i) => {
   tile.style.transitionDelay = `${(i % 3) * 80}ms`;
 
   tile.innerHTML = `
-    <a class="tile__nav" href="Almog Project.html?id=${w.id}" aria-label="${w.title}" style="position:absolute;inset:0;z-index:6;"></a>
+    <a class="tile__nav" href="project.html?id=${w.id}" aria-label="${w.title}" style="position:absolute;inset:0;z-index:6;"></a>
     <div class="tile__empty">${tile.dataset.index}</div>
     <div class="tile__meta">
       <div class="tile__title">${w.title}</div>

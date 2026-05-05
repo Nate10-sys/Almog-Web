@@ -132,10 +132,10 @@
 </head>
 <body>
   <div class="topbar">
-    <a href="Almog Landing.html" class="wordmark">
+    <a href="index.html" class="wordmark">
       Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
     </a>
-    <a href="Almog Works.html" class="back">← All works</a>
+    <a href="works.html" class="back">← All works</a>
   </div>
 
   <main>
@@ -152,7 +152,7 @@
 
     <div class="pager">
       <a href="#" id="pagerPrev">← Previous</a>
-      <a href="Almog Works.html">Index</a>
+      <a href="works.html">Index</a>
       <a href="#" id="pagerNext">Next →</a>
     </div>
   </main>
@@ -184,9 +184,9 @@ document.title = `${w.title} — Almog`;
 
 const prev = WORKS[(idx - 1 + WORKS.length) % WORKS.length];
 const next = WORKS[(idx + 1) % WORKS.length];
-document.getElementById('pagerPrev').href = `Almog Project.html?id=${prev.id}`;
+document.getElementById('pagerPrev').href = `project.html?id=${prev.id}`;
 document.getElementById('pagerPrev').textContent = `← ${prev.title}`;
-document.getElementById('pagerNext').href = `Almog Project.html?id=${next.id}`;
+document.getElementById('pagerNext').href = `project.html?id=${next.id}`;
 document.getElementById('pagerNext').textContent = `${next.title} →`;
 
 // Pull media from IDB (same store as gallery)
