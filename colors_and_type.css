@@ -1,0 +1,299 @@
+/* =========================================================================
+   ALMOG — Foundation Tokens
+   Colors + Typography
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap');
+
+:root {
+  /* ---------------------------------------------------------------------
+     COLORS — Base
+     The brand lives almost entirely in black and white.
+     Purple is a whisper — never a shout.
+     --------------------------------------------------------------------- */
+
+  --jet-black:       #0B0B0C;   /* canvas, primary surface */
+  --soft-white:      #F5F5F5;   /* primary text on dark, light surface */
+  /* Brand is monochrome. The legacy --electric-purple token is kept as an
+     alias to --soft-white so any prior call sites degrade gracefully. */
+  --electric-purple: #F5F5F5;
+
+  /* Greyscale ramp (cinematic, slightly cool) */
+  --grey-1:  #18181A;   /* near-black surface elevation */
+  --grey-2:  #2A2A2D;   /* hairlines on dark, secondary surface */
+  --grey-3:  #4A4A4E;   /* disabled, deep secondary text */
+  --grey-4:  #6E6E72;   /* tertiary text on dark */
+  --grey-5:  #9A9A9E;   /* secondary text on dark */
+  --grey-6:  #C7C7CB;   /* hairlines on light */
+  --grey-7:  #E5E5E5;   /* light surface elevation */
+
+  /* ---------------------------------------------------------------------
+     COLORS — Semantic (foreground / background / line)
+     Default theme: DARK (jet black canvas)
+     --------------------------------------------------------------------- */
+
+  --bg:        var(--jet-black);
+  --bg-elev:   var(--grey-1);
+  --bg-inv:    var(--soft-white);
+
+  --fg:        var(--soft-white);
+  --fg-2:      var(--grey-5);     /* secondary text */
+  --fg-3:      var(--grey-4);     /* tertiary / metadata */
+  --fg-mute:   var(--grey-3);     /* disabled */
+  --fg-inv:    var(--jet-black);
+
+  --line:      rgba(245, 245, 245, 0.10);   /* hairline on dark */
+  --line-2:    rgba(245, 245, 245, 0.18);   /* stronger hairline */
+  --line-inv:  rgba(11, 11, 12, 0.10);      /* hairline on light */
+
+  --accent:    var(--soft-white);
+  --accent-soft: rgba(245, 245, 245, 0.12);
+
+  /* Light-theme semantic equivalents (apply to .theme-light) */
+
+  /* ---------------------------------------------------------------------
+     TYPOGRAPHY — Families
+     --------------------------------------------------------------------- */
+  --font-display: 'Cormorant Garamond', 'Didot', 'Times New Roman', Georgia, serif;
+  --font-sans:    'Satoshi', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  /* ---------------------------------------------------------------------
+     TYPOGRAPHY — Type Scale
+     Cinematic / editorial. Big headlines, restrained body.
+     --------------------------------------------------------------------- */
+  --fs-hero:     clamp(64px, 11vw, 168px);  /* full-bleed editorial hero */
+  --fs-display:  clamp(48px, 7vw, 96px);    /* section headlines */
+  --fs-h1:       clamp(40px, 5vw, 64px);
+  --fs-h2:       clamp(28px, 3.2vw, 40px);
+  --fs-h3:       22px;
+  --fs-h4:       18px;
+  --fs-body:     16px;
+  --fs-body-sm:  14px;
+  --fs-caption:  12px;
+  --fs-eyebrow:  11px;     /* uppercase labels */
+
+  --lh-display:  0.95;
+  --lh-tight:    1.05;
+  --lh-snug:     1.25;
+  --lh-body:     1.55;
+  --lh-loose:    1.7;
+
+  --ls-hero:     -0.04em;
+  --ls-display:  -0.02em;
+  --ls-tight:    -0.01em;
+  --ls-body:     0;
+  --ls-eyebrow:  0.22em;     /* generous tracking for uppercase eyebrows */
+  --ls-button:   0.18em;
+
+  /* ---------------------------------------------------------------------
+     SPACING — 4pt grid
+     --------------------------------------------------------------------- */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  24px;
+  --s-6:  32px;
+  --s-7:  48px;
+  --s-8:  64px;
+  --s-9:  96px;
+  --s-10: 128px;
+  --s-11: 192px;     /* section breaks — almog uses generous whitespace */
+
+  /* ---------------------------------------------------------------------
+     RADII — Almost-flat. The brand is editorial; cards are mostly square.
+     --------------------------------------------------------------------- */
+  --r-0: 0px;
+  --r-1: 2px;        /* default — barely-there radius */
+  --r-2: 4px;
+  --r-3: 8px;
+  --r-pill: 999px;
+
+  /* ---------------------------------------------------------------------
+     ELEVATION / SHADOW
+     Used sparingly. Most surfaces are flat with a hairline border.
+     --------------------------------------------------------------------- */
+  --shadow-1: 0 1px 0 rgba(245, 245, 245, 0.06);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.5);
+
+  /* ---------------------------------------------------------------------
+     MOTION — Subtle, slow, confident
+     --------------------------------------------------------------------- */
+  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);    /* standard exit */
+  --ease-in:   cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-io:   cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms;
+  --dur-2: 240ms;
+  --dur-3: 480ms;
+  --dur-4: 800ms;     /* the "cinematic" reveal */
+  --dur-5: 1200ms;
+
+  /* ---------------------------------------------------------------------
+     LAYOUT
+     --------------------------------------------------------------------- */
+  --container:      1440px;
+  --container-wide: 1680px;
+  --gutter:         clamp(20px, 4vw, 48px);
+}
+
+/* Light theme — invert the surface, keep the system honest */
+.theme-light {
+  --bg:       var(--soft-white);
+  --bg-elev:  #FFFFFF;
+  --bg-inv:   var(--jet-black);
+  --fg:       var(--jet-black);
+  --fg-2:     var(--grey-3);
+  --fg-3:     var(--grey-4);
+  --fg-mute:  var(--grey-6);
+  --fg-inv:   var(--soft-white);
+  --line:     rgba(11, 11, 12, 0.10);
+  --line-2:   rgba(11, 11, 12, 0.18);
+}
+
+/* =========================================================================
+   BASE — element defaults
+   ========================================================================= */
+
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--soft-white);
+  color: var(--jet-black);
+}
+
+/* =========================================================================
+   SEMANTIC TYPOGRAPHY CLASSES
+   Apply directly: <h1 class="t-hero">, <p class="t-eyebrow">, etc.
+   ========================================================================= */
+
+.t-hero, .t-display, .t-h1, .t-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--fg);
+}
+
+.t-hero {
+  font-size: var(--fs-hero);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-hero);
+}
+
+.t-display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+}
+
+.t-h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-display);
+}
+
+.t-h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+}
+
+.t-h3 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+}
+
+.t-h4 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-snug);
+  letter-spacing: 0;
+}
+
+.t-body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 400;
+  color: var(--fg);
+}
+
+.t-body-lg {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: var(--lh-body);
+  font-weight: 300;
+  color: var(--fg);
+}
+
+.t-body-sm {
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+}
+
+.t-caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-snug);
+  color: var(--fg-3);
+}
+
+/* The signature ALMOG eyebrow — uppercase, wide tracking, thin */
+.t-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--fs-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+
+.t-button {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--ls-button);
+  text-transform: uppercase;
+}
+
+.t-quote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--fs-h2);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-body-sm);
+  letter-spacing: 0;
+}
+
+/* =========================================================================
+   UTILITY — common surfaces
+   ========================================================================= */
+
+.hairline       { border: 1px solid var(--line); }
+.hairline-top   { border-top: 1px solid var(--line); }
+.hairline-bottom{ border-bottom: 1px solid var(--line); }
+
+.surface       { background: var(--bg); color: var(--fg); }
+.surface-elev  { background: var(--bg-elev); color: var(--fg); }
+.surface-inv   { background: var(--bg-inv); color: var(--fg-inv); }

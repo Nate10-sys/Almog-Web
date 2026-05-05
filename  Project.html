@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project — Almog</title>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --fg: #F5F5F0;
+    --fg-2: rgba(245, 245, 240, 0.55);
+    --line: rgba(245, 245, 240, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--fg); color: var(--bg); }
+  a { color: inherit; text-decoration: none; }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 80px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; z-index: 100;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 300; font-size: 22px;
+    mix-blend-mode: difference;
+  }
+  .wordmark .dot {
+    display: inline-block; width: 4px; height: 4px;
+    background: var(--fg); border-radius: 50%;
+    margin: 0 10px 4px 10px; vertical-align: middle; opacity: 0.7;
+  }
+  .wordmark .meta {
+    font-family: var(--font-sans); font-size: 10px; font-weight: 300;
+    letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6;
+  }
+  .back {
+    font-family: var(--font-sans); font-size: 11px; font-weight: 300;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    opacity: 0.7; mix-blend-mode: difference;
+    transition: opacity 480ms var(--ease-out);
+  }
+  .back:hover { opacity: 1; }
+
+  .stage {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 120px 32px 60px;
+  }
+  .frame {
+    position: relative;
+    width: min(86vw, 1500px);
+    aspect-ratio: 16 / 10;
+    background: #050505;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    opacity: 0;
+    animation: rise 1400ms var(--ease-out) 200ms forwards;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .frame__media {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .frame__empty {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-style: italic;
+    font-size: 18px; color: var(--fg); opacity: 0.35;
+  }
+
+  .meta {
+    width: min(86vw, 1500px);
+    margin: 32px auto 0;
+    display: flex; justify-content: space-between; align-items: baseline;
+    opacity: 0;
+    animation: rise 1400ms var(--ease-out) 600ms forwards;
+  }
+  .meta__title {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(28px, 4vw, 48px);
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .meta__sub {
+    font-family: var(--font-sans); font-size: 10px; font-weight: 300;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--fg); opacity: 0.55;
+  }
+  .meta__sub .sep {
+    display: inline-block; width: 14px; height: 1px;
+    background: var(--fg); opacity: 0.4;
+    margin: 3px 12px; vertical-align: middle;
+  }
+
+  .pager {
+    width: min(86vw, 1500px);
+    margin: 96px auto 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between;
+    font-family: var(--font-sans); font-size: 10px; font-weight: 300;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--fg); opacity: 0.5;
+  }
+  .pager a { transition: opacity 480ms var(--ease-out); }
+  .pager a:hover { opacity: 1; }
+
+  @media (max-width: 720px) {
+    .topbar { height: 64px; padding: 0 20px; }
+    .wordmark { font-size: 18px; }
+    .stage { padding: 90px 20px 40px; }
+    .frame { width: calc(100vw - 40px); aspect-ratio: 4/5; }
+    .meta { width: calc(100vw - 40px); flex-direction: column; gap: 12px; }
+    .pager { width: calc(100vw - 40px); margin: 64px auto 48px; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="Almog Landing.html" class="wordmark">
+      Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
+    </a>
+    <a href="Almog Works.html" class="back">← All works</a>
+  </div>
+
+  <main>
+    <section class="stage">
+      <div class="frame" id="frame">
+        <div class="frame__empty" id="frameEmpty">No media uploaded yet</div>
+      </div>
+    </section>
+
+    <div class="meta">
+      <div class="meta__title" id="metaTitle">—</div>
+      <div class="meta__sub" id="metaSub">—</div>
+    </div>
+
+    <div class="pager">
+      <a href="#" id="pagerPrev">← Previous</a>
+      <a href="Almog Works.html">Index</a>
+      <a href="#" id="pagerNext">Next →</a>
+    </div>
+  </main>
+
+<script>
+const WORKS = [
+  { id: 'aether',        title: 'Aether',        year: 2025, format: 'Brand Film' },
+  { id: 'silent-bloom',  title: 'Silent Bloom',  year: 2025, format: 'Editorial' },
+  { id: 'vessel',        title: 'Vessel',        year: 2024, format: 'Campaign Loop' },
+  { id: 'northlight',    title: 'Northlight',    year: 2024, format: 'AI Editorial' },
+  { id: 'halo',          title: 'Halo',          year: 2024, format: 'Brand Film' },
+  { id: 'ferrum',        title: 'Ferrum',        year: 2024, format: 'Editorial' },
+  { id: 'mira',          title: 'Mira',          year: 2023, format: 'Campaign' },
+  { id: 'echo-chamber',  title: 'Echo Chamber',  year: 2023, format: 'AI Visual' },
+  { id: 'pale-horse',    title: 'Pale Horse',    year: 2023, format: 'Editorial' },
+  { id: 'dust-and-light',title: 'Dust & Light',  year: 2023, format: 'Brand Film' },
+  { id: 'veil',          title: 'Veil',          year: 2022, format: 'Editorial' },
+  { id: 'ode',           title: 'Ode',           year: 2022, format: 'AI Editorial' },
+];
+
+const params = new URLSearchParams(location.search);
+const id = params.get('id') || WORKS[0].id;
+const idx = Math.max(0, WORKS.findIndex(w => w.id === id));
+const w = WORKS[idx];
+
+document.getElementById('metaTitle').textContent = w.title;
+document.getElementById('metaSub').innerHTML = `${w.year}<span class="sep"></span>${w.format}`;
+document.title = `${w.title} — Almog`;
+
+const prev = WORKS[(idx - 1 + WORKS.length) % WORKS.length];
+const next = WORKS[(idx + 1) % WORKS.length];
+document.getElementById('pagerPrev').href = `Almog Project.html?id=${prev.id}`;
+document.getElementById('pagerPrev').textContent = `← ${prev.title}`;
+document.getElementById('pagerNext').href = `Almog Project.html?id=${next.id}`;
+document.getElementById('pagerNext').textContent = `${next.title} →`;
+
+// Pull media from IDB (same store as gallery)
+const DB_NAME='almog-gallery', STORE='media';
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = () => { const db=r.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE); };
+    r.onsuccess = () => resolve(r.result);
+    r.onerror   = () => reject(r.error);
+  });
+}
+async function idbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const r = tx.objectStore(STORE).get(key);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror   = () => reject(r.error);
+  });
+}
+(async () => {
+  const blob = await idbGet(w.id);
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const isVideo = (blob.type || '').startsWith('video/');
+  const el = document.createElement(isVideo ? 'video' : 'img');
+  el.src = url;
+  el.className = 'frame__media';
+  if (isVideo) { el.muted=true; el.loop=true; el.autoplay=true; el.playsInline=true; }
+  document.getElementById('frameEmpty').remove();
+  document.getElementById('frame').appendChild(el);
+})();
+</script>
+</body>
+</html>

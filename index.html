@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Almog — AI Visual Studio</title>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  /* Overrides — brief specifies pure black + warm off-white */
+  :root {
+    --jet-black:  #0A0A0A;
+    --soft-white: #F5F5F0;
+    --bg: #0A0A0A;
+    --fg: #F5F5F0;
+    --fg-2: rgba(245, 245, 240, 0.55);
+    --fg-3: rgba(245, 245, 240, 0.40);
+    --line: rgba(245, 245, 240, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--fg); color: var(--bg); }
+
+  /* ------- Top wordmark (sticky) ------- */
+  .wordmark {
+    position: fixed;
+    top: 28px;
+    left: 32px;
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    color: var(--fg);
+    z-index: 100;
+    mix-blend-mode: difference;
+    user-select: none;
+  }
+  .wordmark .dot {
+    display: inline-block;
+    width: 4px; height: 4px;
+    background: var(--fg);
+    border-radius: 50%;
+    margin: 0 10px 4px 10px;
+    vertical-align: middle;
+    opacity: 0.7;
+  }
+  .wordmark .meta {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.6;
+  }
+  @media (max-width: 720px) {
+    .wordmark { top: 20px; left: 20px; font-size: 18px; }
+    .wordmark .dot { margin: 0 8px 3px 8px; }
+    .wordmark .meta { font-size: 9px; letter-spacing: 0.18em; }
+  }
+
+  /* ------- Index counter (top right) ------- */
+  .index-counter {
+    position: fixed;
+    top: 28px;
+    right: 32px;
+    z-index: 100;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.6;
+    mix-blend-mode: difference;
+    transition: opacity 1200ms var(--ease-out);
+  }
+  .index-counter .num {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0;
+  }
+  @media (max-width: 720px) {
+    .index-counter { top: 22px; right: 20px; font-size: 9px; }
+  }
+
+  /* ------- Sections — full viewport canvases ------- */
+  section {
+    position: relative;
+    width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ------- Hero ------- */
+  .hero {
+    padding: 0;
+  }
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #050505;
+    overflow: hidden;
+  }
+  /* placeholder "video" — barely-there panning luminance, no gradient flair */
+  .hero__media::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 30% 50%, rgba(245,245,240,0.025), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 75% 60%, rgba(245,245,240,0.018), transparent 65%);
+    animation: drift 24s ease-in-out infinite alternate;
+  }
+  .hero__media::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96  0 0 0 0 0.96  0 0 0 0 0.94  0 0 0 0.03 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    opacity: 0.5;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+  @keyframes drift {
+    0%   { transform: translate3d(-1.5%, 0.5%, 0) scale(1.02); }
+    100% { transform: translate3d(1.5%, -0.5%, 0) scale(1.06); }
+  }
+
+  .hero__media .frame-label {
+    position: absolute;
+    bottom: 22px;
+    left: 32px;
+    font-family: var(--font-sans);
+    font-size: 9px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.25;
+  }
+  .hero__media .frame-runtime {
+    position: absolute;
+    bottom: 22px;
+    right: 32px;
+    font-family: var(--font-sans);
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    color: var(--fg);
+    opacity: 0.25;
+  }
+
+  /* hero subhead — fades in once user scrolls past first viewport */
+  .hero__line {
+    position: fixed;
+    left: 50%;
+    bottom: 56px;
+    transform: translateX(-50%);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(15px, 1.5vw, 19px);
+    letter-spacing: 0.01em;
+    color: var(--fg);
+    opacity: 0;
+    transition: opacity 1600ms var(--ease-out);
+    text-align: center;
+    white-space: nowrap;
+    z-index: 90;
+    pointer-events: none;
+    mix-blend-mode: difference;
+  }
+  .hero__line.is-visible { opacity: 0.85; }
+  @media (max-width: 720px) {
+    .hero__line {
+      font-size: 14px;
+      white-space: normal;
+      width: calc(100% - 40px);
+      bottom: 40px;
+    }
+  }
+
+  /* scroll cue */
+  .scroll-cue {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.35;
+    transition: opacity 800ms var(--ease-out);
+  }
+  .scroll-cue::after {
+    content: "";
+    display: block;
+    width: 1px; height: 28px;
+    background: var(--fg);
+    opacity: 0.35;
+    margin: 18px auto 0;
+    animation: descend 2400ms ease-in-out infinite;
+    transform-origin: top;
+  }
+  @keyframes descend {
+    0%   { transform: scaleY(0); opacity: 0; }
+    40%  { transform: scaleY(1); opacity: 0.5; }
+    100% { transform: scaleY(1) translateY(20px); opacity: 0; }
+  }
+
+  /* ------- Selected Work — vertical, one work per viewport ------- */
+  .work {
+    overflow: hidden;
+  }
+  .work__inner {
+    width: min(78vw, 1280px);
+    aspect-ratio: 16 / 10;
+    position: relative;
+    background: #050505;
+    border: 1px solid var(--line);
+    overflow: hidden;
+
+    /* enter state */
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1400ms var(--ease-out), transform 1400ms var(--ease-out);
+  }
+  .work.is-in .work__inner {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* unique-feeling placeholder textures per work — all monochrome, all subtle */
+  .work[data-work="aether"]      .work__inner::before { background: radial-gradient(ellipse 50% 70% at 50% 100%, rgba(245,245,240,0.05), transparent 60%); }
+  .work[data-work="silent-bloom"] .work__inner::before { background: radial-gradient(ellipse 35% 80% at 30% 50%, rgba(245,245,240,0.06), transparent 55%); }
+  .work[data-work="vessel"]      .work__inner::before { background: radial-gradient(ellipse 80% 30% at 50% 50%, rgba(245,245,240,0.045), transparent 60%); }
+  .work[data-work="northlight"]  .work__inner::before { background: radial-gradient(ellipse 40% 50% at 70% 40%, rgba(245,245,240,0.07), transparent 60%); }
+
+  .work__inner::before {
+    content: "";
+    position: absolute; inset: 0;
+    animation: drift 28s ease-in-out infinite alternate;
+  }
+  .work__inner::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96  0 0 0 0 0.96  0 0 0 0 0.94  0 0 0 0.025 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    opacity: 0.5;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  /* metadata: bottom-left only */
+  .work__meta {
+    position: absolute;
+    left: 28px;
+    bottom: 28px;
+    z-index: 5;
+
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 1400ms var(--ease-out) 300ms, transform 1400ms var(--ease-out) 300ms;
+  }
+  .work.is-in .work__meta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .work__title {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(28px, 3.6vw, 52px);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: var(--fg);
+  }
+  .work__subline {
+    margin-top: 14px;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.55;
+  }
+  .work__subline .sep {
+    display: inline-block;
+    width: 18px;
+    height: 1px;
+    background: var(--fg);
+    opacity: 0.4;
+    margin: 4px 14px;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 720px) {
+    .work__inner {
+      width: calc(100vw - 32px);
+      aspect-ratio: 4 / 5;
+    }
+    .work__meta { left: 18px; bottom: 18px; }
+    .work__title { font-size: 28px; }
+    .work__subline { font-size: 9px; letter-spacing: 0.22em; }
+    .work__subline .sep { margin: 3px 10px; width: 14px; }
+  }
+
+  /* ------- Footer / CTA ------- */
+  .cta {
+    flex-direction: column;
+    text-align: center;
+    padding: 0 var(--gutter);
+  }
+  .cta__line {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(34px, 5.5vw, 76px);
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    color: var(--fg);
+    max-width: 18ch;
+
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1600ms var(--ease-out), transform 1600ms var(--ease-out);
+  }
+  .cta.is-in .cta__line { opacity: 1; transform: translateY(0); }
+
+  .cta__links {
+    margin-top: 72px;
+    display: flex;
+    gap: 56px;
+    justify-content: center;
+    align-items: center;
+
+    opacity: 0;
+    transition: opacity 1600ms var(--ease-out) 400ms;
+  }
+  .cta.is-in .cta__links { opacity: 1; }
+
+  .cta__links a {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--fg);
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 6px;
+  }
+  .cta__links a::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--fg);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 480ms var(--ease-out);
+  }
+  .cta__links a:hover::after { transform: scaleX(1); }
+
+  .cta__sep {
+    width: 1px;
+    height: 14px;
+    background: var(--fg);
+    opacity: 0.25;
+  }
+
+  /* footer-foot — colophon ribbon */
+  .colophon {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - var(--gutter) * 2);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.4;
+  }
+  @media (max-width: 720px) {
+    .cta__links { gap: 32px; margin-top: 48px; flex-direction: column; }
+    .cta__sep { display: none; }
+    .colophon { font-size: 8px; letter-spacing: 0.18em; }
+  }
+
+  /* respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- top-left wordmark -->
+  <div class="wordmark">
+    Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
+  </div>
+
+  <!-- top-right index -->
+  <div class="index-counter" id="indexCounter">
+    <span class="num" id="indexNum">00</span>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" data-screen-label="01 Hero" data-section="hero">
+    <div class="hero__media" aria-label="Showreel placeholder">
+      <span class="frame-label">Showreel · 2026</span>
+      <span class="frame-runtime">02:14</span>
+    </div>
+    <div class="scroll-cue" id="scrollCue">Scroll</div>
+  </section>
+
+  <!-- floating hero subhead, fades in after 1st viewport -->
+  <div class="hero__line" id="heroLine">AI-driven content for brands that want to be remembered.</div>
+
+  <!-- SELECTED WORK -->
+  <section class="work" data-screen-label="02 Aether" data-section="work" data-work="aether" data-index="01">
+    <div class="work__inner">
+      <div class="work__meta">
+        <div class="work__title">Aether</div>
+        <div class="work__subline">2025<span class="sep"></span>Brand Film</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="work" data-screen-label="03 Silent Bloom" data-section="work" data-work="silent-bloom" data-index="02">
+    <div class="work__inner">
+      <div class="work__meta">
+        <div class="work__title">Silent Bloom</div>
+        <div class="work__subline">2025<span class="sep"></span>Editorial</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="work" data-screen-label="04 Vessel" data-section="work" data-work="vessel" data-index="03">
+    <div class="work__inner">
+      <div class="work__meta">
+        <div class="work__title">Vessel</div>
+        <div class="work__subline">2024<span class="sep"></span>Campaign Loop</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="work" data-screen-label="05 Northlight" data-section="work" data-work="northlight" data-index="04">
+    <div class="work__inner">
+      <div class="work__meta">
+        <div class="work__title">Northlight</div>
+        <div class="work__subline">2024<span class="sep"></span>AI Editorial</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER / CTA -->
+  <section class="cta" data-screen-label="06 Contact" data-section="cta">
+    <div class="cta__line">Let's build something cinematic.</div>
+    <div class="cta__links">
+      <a href="mailto:almoggabay1@gmail.com">almoggabay1@gmail.com</a>
+      <span class="cta__sep" aria-hidden="true"></span>
+      <a href="https://instagram.com/almog_gabay_photographer" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <div class="colophon">
+      <span>© Almog Gabay · 2026</span>
+      <span>Tel Aviv ⇄ Worldwide</span>
+    </div>
+  </section>
+
+<script>
+  // --- Hero subhead reveal (after first viewport scroll past) -------
+  const heroLine  = document.getElementById('heroLine');
+  const scrollCue = document.getElementById('scrollCue');
+  const indexCounter = document.getElementById('indexCounter');
+  const indexNum  = document.getElementById('indexNum');
+
+  function onScroll() {
+    const y = window.scrollY;
+    const vh = window.innerHeight;
+
+    // hero line fades in once user has scrolled ~30% into hero, fades out after hero
+    const heroProg = y / vh;
+    if (heroProg > 0.18 && heroProg < 0.92) {
+      heroLine.classList.add('is-visible');
+    } else {
+      heroLine.classList.remove('is-visible');
+    }
+
+    // scroll cue dims after a tiny scroll
+    scrollCue.style.opacity = y > 80 ? '0' : '0.35';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // --- Reveal each work as it enters viewport ------------------------
+  const works = document.querySelectorAll('section.work, section.cta');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-in');
+      }
+    });
+  }, { threshold: 0.35 });
+  works.forEach(el => io.observe(el));
+
+  // --- Update top-right index counter --------------------------------
+  const sections = [...document.querySelectorAll('section')];
+  const idxLabels = ['00', '01', '02', '03', '04', '∞']; // hero, 4 works, cta
+  function updateIndex() {
+    const mid = window.scrollY + window.innerHeight / 2;
+    let activeIdx = 0;
+    sections.forEach((s, i) => {
+      const top = s.offsetTop;
+      const bot = top + s.offsetHeight;
+      if (mid >= top && mid < bot) activeIdx = i;
+    });
+    indexNum.textContent = idxLabels[activeIdx] ?? '00';
+  }
+  window.addEventListener('scroll', updateIndex, { passive: true });
+  window.addEventListener('resize', updateIndex);
+  updateIndex();
+</script>
+</body>
+</html>
