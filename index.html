@@ -68,22 +68,6 @@
     .wordmark .meta { font-size: 9px; letter-spacing: 0.18em; }
   }
 
-  /* Wordmark hover — mini logo video (desktop, subsequent visits) */
-  .wordmark__text { transition: opacity 300ms var(--ease-out); }
-  .wordmark.is-logo-hovering .wordmark__text { opacity: 0; }
-  .wordmark__minivideo {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 120px;
-    height: auto;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 300ms var(--ease-out);
-  }
-  .wordmark.is-logo-hovering .wordmark__minivideo { opacity: 1; }
-  @media (max-width: 720px) { .wordmark__minivideo { display: none; } }
-
   /* ------- Top-right controls: Edit + Works ------- */
   .topcontrols {
     position: fixed;
@@ -463,24 +447,32 @@
     .colophon { font-size: 8px; letter-spacing: 0.18em; }
   }
 
-  /* ------- Marquee strip ------- */
+  /* ------- Marquee strip — 14 portrait slots (9:16) ------- */
   .marquee-strip {
     position: relative;
     width: 100vw;
-    height: 240px;
+    height: 220px;
     min-height: 0;
     background: #0A0A0A;
     overflow: hidden;
-    /* Edge dissolve — images fade into the page rather than hard-cutting */
     -webkit-mask-image: linear-gradient(to right,
       transparent 0, #000 80px, #000 calc(100% - 80px), transparent 100%);
     mask-image: linear-gradient(to right,
       transparent 0, #000 80px, #000 calc(100% - 80px), transparent 100%);
   }
+  .marquee-strip.is-all-empty { display: none; }
+  /* In edit mode: always visible and no mask */
+  body.editing .marquee-strip {
+    display: block;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .marquee-strip.is-dragover { outline: 1px dashed rgba(245,245,240,0.4); outline-offset: -1px; }
+
   .marquee__track {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: stretch;
+    gap: 6px;
     height: 100%;
     width: max-content;
     animation: marquee 60s linear infinite;
@@ -489,25 +481,55 @@
     from { transform: translateX(0); }
     to   { transform: translateX(-50%); }
   }
-  /* Stop and reset when editing so × buttons are reachable */
   body.editing .marquee__track { animation: none; transform: translateX(0); }
 
   .marquee__item {
     position: relative;
-    height: 100%;
+    width: 124px;   /* 220 × 9/16 ≈ 124 */
+    height: 220px;
     flex-shrink: 0;
+    overflow: hidden;
   }
+  /* Empty slots hidden outside edit mode */
+  .marquee__item.is-empty { display: none; }
+  /* In edit mode: original empty slots = clickable placeholder */
+  body.editing .marquee__item[data-index].is-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(245, 245, 240, 0.2);
+    cursor: pointer;
+  }
+  body.editing .marquee__item[data-index].is-empty:hover {
+    border-color: rgba(245, 245, 240, 0.45);
+  }
+  /* Duplicates are never interactive — hide them in edit mode */
+  body.editing .marquee__item[aria-hidden="true"] { display: none; }
+
   .marquee__img {
-    height: 240px;
-    width: 240px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     display: block;
     pointer-events: none;
     user-select: none;
-    flex-shrink: 0;
   }
+  .marquee__item.is-empty .marquee__img { display: none; }
 
-  /* × remove button per image (visible in edit mode, originals only) */
+  /* "+" icon inside empty slots (edit mode only) */
+  .marquee__empty {
+    display: none;
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--fg);
+    opacity: 0.3;
+    pointer-events: none;
+    user-select: none;
+  }
+  body.editing .marquee__item[data-index].is-empty .marquee__empty { display: block; }
+
+  /* × remove button — visible in edit mode on filled original slots */
   .marquee__remove {
     position: absolute;
     top: 8px;
@@ -527,64 +549,9 @@
     transition: background 240ms var(--ease-out), border-color 240ms var(--ease-out);
   }
   .marquee__remove:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-  body.editing .marquee__item .marquee__remove { display: flex; }
+  body.editing .marquee__item[data-index]:not(.is-empty) .marquee__remove { display: flex; }
 
-  /* Centered drop-zone label (edit mode only) */
-  .marquee__editlayer {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    border: 1px dashed rgba(245, 245, 240, 0.22);
-    pointer-events: none;
-  }
-  body.editing .marquee__editlayer { display: flex; }
-  .marquee-strip.is-dragover .marquee__editlayer {
-    background: rgba(245, 245, 240, 0.04);
-    border-color: rgba(245, 245, 240, 0.6);
-  }
-  .marquee__editlayer {
-    flex-direction: column;
-    gap: 6px;
-  }
-  .marquee__editlabel {
-    font-family: var(--font-sans);
-    font-size: 10px;
-    font-weight: 300;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--fg);
-    opacity: 0.45;
-    user-select: none;
-  }
-  .marquee__editsub {
-    font-family: var(--font-sans);
-    font-size: 9px;
-    font-weight: 300;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--fg);
-    opacity: 0.28;
-    user-select: none;
-  }
-  .marquee__uploadbtn {
-    margin-top: 6px;
-    background: transparent;
-    border: 1px solid rgba(245, 245, 240, 0.28);
-    color: var(--fg);
-    font-family: var(--font-sans);
-    font-size: 9px;
-    font-weight: 300;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    padding: 7px 14px;
-    cursor: pointer;
-    pointer-events: auto;
-    transition: border-color 240ms var(--ease-out), background 240ms var(--ease-out);
-  }
-  .marquee__uploadbtn:hover { border-color: var(--fg); }
+  .marquee__fileinput { display: none; }
 
   /* ------- Edit-mode upload UI ------- */
   .work__media {
@@ -747,9 +714,8 @@
 <body>
 
   <!-- top-left wordmark -->
-  <div class="wordmark" id="wordmark">
-    <span class="wordmark__text">Almog<span class="dot"></span><span class="meta">AI Visual Studio</span></span>
-    <video class="wordmark__minivideo" id="wordmarkVideo" src="assets/logo.mp4" muted playsinline preload="metadata"></video>
+  <div class="wordmark">
+    Almog<span class="dot"></span><span class="meta">AI Visual Studio</span>
   </div>
 
   <!-- top-right controls -->
@@ -785,56 +751,42 @@
     </div>
   </section>
 
-  <!-- MARQUEE STRIP — between Aether and Silent Bloom -->
+  <!-- MARQUEE STRIP — 14 portrait slots, between Aether and Silent Bloom -->
   <section class="marquee-strip" data-section="marquee" aria-label="Selected imagery">
     <div class="marquee__track" id="marqueeTrack">
 
-      <!-- ── Original set (data-index 1–7) ── -->
-      <div class="marquee__item" data-index="1">
-        <img class="marquee__img" data-index="1" src="https://picsum.photos/seed/almog1/600/800" alt="">
-        <button class="marquee__remove" type="button" aria-label="Remove image 1">×</button>
-      </div>
-      <div class="marquee__item" data-index="2">
-        <img class="marquee__img" data-index="2" src="https://picsum.photos/seed/almog2/900/600" alt="">
-        <button class="marquee__remove" type="button" aria-label="Remove image 2">×</button>
-      </div>
-      <div class="marquee__item" data-index="3">
-        <img class="marquee__img" data-index="3" src="https://picsum.photos/seed/almog3/700/900" alt="">
-        <button class="marquee__remove" type="button" aria-label="Remove image 3">×</button>
-      </div>
-      <div class="marquee__item" data-index="4">
-        <img class="marquee__img" data-index="4" src="https://picsum.photos/seed/almog4/800/600" alt="">
-        <button class="marquee__remove" type="button" aria-label="Remove image 4">×</button>
-      </div>
-      <div class="marquee__item" data-index="5">
-        <img class="marquee__img" data-index="5" src="https://picsum.photos/seed/almog5/500/700" alt="">
-        <button class="marquee__remove" type="button" aria-label="Remove image 5">×</button>
-      </div>
-      <div class="marquee__item" data-index="6">
-        <img class="marquee__img" data-index="6" src="https://picsum.photos/seed/almog6/1000/650" alt="">
-        <button class="marquee__remove" type="button" aria-label="Remove image 6">×</button>
-      </div>
-      <div class="marquee__item" data-index="7">
-        <img class="marquee__img" data-index="7" src="https://picsum.photos/seed/almog7/600/800" alt="">
-        <button class="marquee__remove" type="button" aria-label="Remove image 7">×</button>
-      </div>
+      <!-- ── Original set (data-index 1–14) — interactive ── -->
+      <div class="marquee__item is-empty" data-index="1"><img class="marquee__img" data-index="1" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 1">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="1"></div>
+      <div class="marquee__item is-empty" data-index="2"><img class="marquee__img" data-index="2" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 2">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="2"></div>
+      <div class="marquee__item is-empty" data-index="3"><img class="marquee__img" data-index="3" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 3">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="3"></div>
+      <div class="marquee__item is-empty" data-index="4"><img class="marquee__img" data-index="4" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 4">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="4"></div>
+      <div class="marquee__item is-empty" data-index="5"><img class="marquee__img" data-index="5" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 5">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="5"></div>
+      <div class="marquee__item is-empty" data-index="6"><img class="marquee__img" data-index="6" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 6">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="6"></div>
+      <div class="marquee__item is-empty" data-index="7"><img class="marquee__img" data-index="7" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 7">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="7"></div>
+      <div class="marquee__item is-empty" data-index="8"><img class="marquee__img" data-index="8" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 8">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="8"></div>
+      <div class="marquee__item is-empty" data-index="9"><img class="marquee__img" data-index="9" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 9">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="9"></div>
+      <div class="marquee__item is-empty" data-index="10"><img class="marquee__img" data-index="10" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 10">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="10"></div>
+      <div class="marquee__item is-empty" data-index="11"><img class="marquee__img" data-index="11" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 11">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="11"></div>
+      <div class="marquee__item is-empty" data-index="12"><img class="marquee__img" data-index="12" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 12">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="12"></div>
+      <div class="marquee__item is-empty" data-index="13"><img class="marquee__img" data-index="13" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 13">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="13"></div>
+      <div class="marquee__item is-empty" data-index="14"><img class="marquee__img" data-index="14" alt=""><div class="marquee__empty">+</div><button class="marquee__remove" type="button" aria-label="Remove 14">×</button><input type="file" accept="image/*" class="marquee__fileinput" data-index="14"></div>
 
-      <!-- ── Duplicate set — seamless loop (aria-hidden, no buttons) ── -->
-      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="1" src="https://picsum.photos/seed/almog1/600/800" alt=""></div>
-      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="2" src="https://picsum.photos/seed/almog2/900/600" alt=""></div>
-      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="3" src="https://picsum.photos/seed/almog3/700/900" alt=""></div>
-      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="4" src="https://picsum.photos/seed/almog4/800/600" alt=""></div>
-      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="5" src="https://picsum.photos/seed/almog5/500/700" alt=""></div>
-      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="6" src="https://picsum.photos/seed/almog6/1000/650" alt=""></div>
-      <div class="marquee__item" aria-hidden="true"><img class="marquee__img" data-index="7" src="https://picsum.photos/seed/almog7/600/800" alt=""></div>
+      <!-- ── Duplicate set — seamless loop (aria-hidden, no controls) ── -->
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="1" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="2" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="3" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="4" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="5" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="6" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="7" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="8" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="9" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="10" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="11" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="12" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="13" alt=""></div>
+      <div class="marquee__item is-empty" aria-hidden="true"><img class="marquee__img" data-index="14" alt=""></div>
 
-    </div>
-    <!-- Edit-mode drop-zone label -->
-    <div class="marquee__editlayer" id="marqueeEditLayer">
-      <span class="marquee__editlabel">Drop images here to replace marquee · 7 slots</span>
-      <span class="marquee__editsub">(up to 7)</span>
-      <button class="marquee__uploadbtn" id="marqueeUploadBtn" type="button">Upload Photos</button>
-      <input type="file" accept="image/*" multiple id="marqueeFileInput" class="work__fileinput">
     </div>
   </section>
 
@@ -880,34 +832,22 @@
   </section>
 
   <!-- Permanent bottom-right logo -->
-  <video class="logo-corner" src="assets/logo.mp4" autoplay muted loop playsinline></video>
+  <video class="logo-corner" src="assets/logo.mp4" autoplay muted playsinline></video>
 
   <div class="editbanner" id="editBanner">Edit mode is local to this browser — uploaded media is not visible to other visitors. Use this to preview your site.</div>
 
 <script>
-  // Wordmark hover — desktop only
-  wireWordmarkHover();
-  function wireWordmarkHover() {
-    if (!window.matchMedia('(min-width: 721px)').matches) return;
-    const wordmark  = document.getElementById('wordmark');
-    const miniVideo = document.getElementById('wordmarkVideo');
-    if (!wordmark || !miniVideo) return;
-
-    function showVideo() {
-      wordmark.classList.add('is-logo-hovering');
-      miniVideo.currentTime = 0;
-      miniVideo.play().catch(() => {});
-    }
-    function showText() {
-      wordmark.classList.remove('is-logo-hovering');
-      miniVideo.pause();
-      miniVideo.currentTime = 0;
-    }
-
-    wordmark.addEventListener('mouseenter', showVideo);
-    wordmark.addEventListener('mouseleave', showText);
-    miniVideo.addEventListener('ended', showText);
-  }
+  // Corner logo — play once on load, freeze on last frame; replay on hover
+  (function () {
+    const logo = document.querySelector('.logo-corner');
+    if (!logo) return;
+    function freeze() { logo.pause(); logo.currentTime = logo.duration; }
+    logo.addEventListener('ended', freeze);
+    logo.addEventListener('mouseenter', () => {
+      logo.currentTime = 0;
+      logo.play().catch(() => {});
+    });
+  })();
 
   // --- Hero subhead reveal (after first viewport scroll past) -------
   const heroLine  = document.getElementById('heroLine');
@@ -1196,40 +1136,66 @@
   });
 
   // ===================================================================
-  // Marquee strip — IDB upload, hydration, × remove
-  // Keys: marquee-1 … marquee-7 (same "almog-gallery/media" IDB store)
-  // Placeholders swapped in if no IDB blob for that slot.
+  // Marquee strip — 14 portrait slots, IDB keys marquee-1 … marquee-14
   // ===================================================================
-  const MARQUEE_COUNT = 7;
-  const MARQUEE_PLACEHOLDERS = [
-    'https://picsum.photos/seed/almog1/600/800',
-    'https://picsum.photos/seed/almog2/900/600',
-    'https://picsum.photos/seed/almog3/700/900',
-    'https://picsum.photos/seed/almog4/800/600',
-    'https://picsum.photos/seed/almog5/500/700',
-    'https://picsum.photos/seed/almog6/1000/650',
-    'https://picsum.photos/seed/almog7/600/800',
-  ];
+  const MARQUEE_COUNT = 14;
 
-  // Helper: update every img[data-index="n"] in the track (original + duplicate)
-  function setMarqueeSlot(idx, src) {
+  // Update img src + toggle is-empty on every item (original + duplicate)
+  function setMarqueeSlot(idx, srcOrNull) {
+    const isEmpty = !srcOrNull;
     document.querySelectorAll(`#marqueeTrack .marquee__img[data-index="${idx}"]`)
-      .forEach(img => { img.src = src; });
+      .forEach(img => {
+        if (srcOrNull) { img.src = srcOrNull; }
+        else { img.removeAttribute('src'); }
+      });
+    document.querySelectorAll('#marqueeTrack .marquee__item').forEach(item => {
+      if (item.querySelector(`.marquee__img[data-index="${idx}"]`))
+        item.classList.toggle('is-empty', isEmpty);
+    });
   }
 
-  // × remove — event delegation so it works regardless of src/state changes
+  // Show/hide the entire strip if all slots are empty
+  function updateMarqueeVisibility() {
+    const strip = document.querySelector('.marquee-strip');
+    const anyFilled = !!document.querySelector(
+      '#marqueeTrack .marquee__item[data-index]:not(.is-empty)');
+    strip.classList.toggle('is-all-empty', !anyFilled);
+  }
+
+  // Event delegation: × remove OR click empty slot → file picker
   document.getElementById('marqueeTrack').addEventListener('click', async e => {
+    if (!document.body.classList.contains('editing')) return;
+
     const btn = e.target.closest('.marquee__remove');
-    if (!btn) return;
-    const item = btn.closest('.marquee__item[data-index]');
-    if (!item) return;
-    const idx = parseInt(item.dataset.index, 10);
-    e.stopPropagation();
-    await idbDelete(`marquee-${idx}`);
-    setMarqueeSlot(idx, MARQUEE_PLACEHOLDERS[idx - 1]);
+    if (btn) {
+      const item = btn.closest('.marquee__item[data-index]');
+      if (!item || item.classList.contains('is-empty')) return;
+      const idx = parseInt(item.dataset.index, 10);
+      e.stopPropagation();
+      await idbDelete(`marquee-${idx}`);
+      setMarqueeSlot(idx, null);
+      updateMarqueeVisibility();
+      return;
+    }
+
+    const item = e.target.closest('.marquee__item[data-index]');
+    if (!item || !item.classList.contains('is-empty')) return;
+    item.querySelector('.marquee__fileinput')?.click();
   });
 
-  // Drag-drop onto the marquee section (up to 7 files at once)
+  // Per-slot file inputs
+  document.querySelectorAll('#marqueeTrack .marquee__fileinput').forEach(input => {
+    input.addEventListener('change', async e => {
+      const f = e.target.files[0]; if (!f) return;
+      const idx = parseInt(input.dataset.index, 10);
+      await idbSet(`marquee-${idx}`, f);
+      setMarqueeSlot(idx, URL.createObjectURL(f));
+      updateMarqueeVisibility();
+      input.value = '';
+    });
+  });
+
+  // Drag-drop: fill next available empty slot per file dropped
   const marqueeSection = document.querySelector('.marquee-strip');
   marqueeSection.addEventListener('dragenter', e => {
     e.preventDefault();
@@ -1243,29 +1209,19 @@
     e.preventDefault();
     marqueeSection.classList.remove('is-dragover');
     if (!document.body.classList.contains('editing')) return;
-    const files = [...e.dataTransfer.files].slice(0, MARQUEE_COUNT);
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      const idx = i + 1;
-      await idbSet(`marquee-${idx}`, f);
-      setMarqueeSlot(idx, URL.createObjectURL(f));
+    let slot = 1;
+    for (const f of [...e.dataTransfer.files]) {
+      while (slot <= MARQUEE_COUNT) {
+        const item = document.querySelector(`#marqueeTrack .marquee__item[data-index="${slot}"]`);
+        if (item?.classList.contains('is-empty')) break;
+        slot++;
+      }
+      if (slot > MARQUEE_COUNT) break;
+      await idbSet(`marquee-${slot}`, f);
+      setMarqueeSlot(slot, URL.createObjectURL(f));
+      slot++;
     }
-  });
-
-  // Upload button — opens file picker for marquee slots
-  const marqueeFileInput = document.getElementById('marqueeFileInput');
-  document.getElementById('marqueeUploadBtn').addEventListener('click', e => {
-    e.stopPropagation(); marqueeFileInput.click();
-  });
-  marqueeFileInput.addEventListener('change', async e => {
-    const files = [...e.target.files].slice(0, MARQUEE_COUNT);
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      const idx = i + 1;
-      await idbSet(`marquee-${idx}`, f);
-      setMarqueeSlot(idx, URL.createObjectURL(f));
-    }
-    marqueeFileInput.value = '';
+    updateMarqueeVisibility();
   });
 
   // Hydrate from IDB on load
@@ -1276,6 +1232,7 @@
         if (blob) setMarqueeSlot(idx, URL.createObjectURL(blob));
       } catch (_) {}
     }
+    updateMarqueeVisibility();
   })();
 </script>
 </body>
