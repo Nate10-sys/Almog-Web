@@ -316,6 +316,10 @@
     left: 28px;
     bottom: 28px;
     z-index: 5;
+  }
+  /* Raise meta above editlayer so contenteditable elements are clickable */
+  body.editing .work__meta {
+    z-index: 15;
 
     opacity: 0;
     transform: translateY(8px);
@@ -450,11 +454,11 @@
     .colophon { font-size: 8px; letter-spacing: 0.18em; }
   }
 
-  /* ------- Marquee strip — 14 portrait slots (9:16) ------- */
+  /* ------- Marquee strip — 30 portrait slots (9:16) ------- */
   .marquee-strip {
     position: relative;
     width: 100vw;
-    height: 280px;
+    height: 340px;
     min-height: 0;
     background: #0A0A0A;
     overflow: hidden;
@@ -464,12 +468,16 @@
       transparent 0, #000 80px, #000 calc(100% - 80px), transparent 100%);
   }
   .marquee-strip.is-all-empty { display: none; }
-  /* In edit mode: always visible and no mask */
+  /* In edit mode: always visible, no mask, horizontally scrollable */
   body.editing .marquee-strip {
     display: block;
     -webkit-mask-image: none;
     mask-image: none;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    cursor: grab;
   }
+  body.editing .marquee-strip:active { cursor: grabbing; }
   .marquee-strip.is-dragover { outline: 1px dashed rgba(245,245,240,0.4); outline-offset: -1px; }
 
   .marquee__track {
@@ -488,8 +496,8 @@
 
   .marquee__item {
     position: relative;
-    width: 158px;   /* 280 × 9/16 ≈ 158 */
-    height: 280px;
+    width: 191px;   /* 340 × 9/16 ≈ 191 */
+    height: 340px;
     flex-shrink: 0;
     overflow: hidden;
   }
@@ -555,6 +563,23 @@
   body.editing .marquee__item[data-index]:not(.is-empty) .marquee__remove { display: flex; }
 
   .marquee__fileinput { display: none; }
+
+  /* Scroll hint — visible only in edit mode, below the marquee strip */
+  .marquee__scroll-hint {
+    display: none;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: 0.4;
+    padding: 6px 0;
+    pointer-events: none;
+    user-select: none;
+  }
+  body.editing .marquee__scroll-hint { display: block; }
 
   /* ------- Edit-mode upload UI ------- */
   .work__media {
@@ -713,7 +738,7 @@
     cursor: text;
   }
   body.editing .editable-text:focus {
-    outline: 1px dashed rgba(245, 245, 240, 0.4);
+    outline: 1px dashed rgba(245, 245, 240, 0.5);
     outline-offset: 4px;
   }
   /* In edit mode, links defer pointer-events to inner editable span */
@@ -860,6 +885,7 @@
 
     </div>
   </section>
+  <div class="marquee__scroll-hint">← scroll to see all 30 slots →</div>
 
   <section class="work" data-screen-label="03 Silent Bloom" data-section="work" data-work="silent-bloom" data-index="02">
     <div class="work__inner">
